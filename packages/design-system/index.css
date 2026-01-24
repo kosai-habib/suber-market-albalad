@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1b4d3e;
+  /* Forest Green */
+  --color-accent: #ffbf00;
+  /* Warm Amber */
+  --color-bg-main: #fcfcfc;
+  /* Off-white */
+  --color-bg-card: #ffffff;
+  --color-text-dark: #1a1a1a;
+  --color-text-muted: #666666;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+}
+
+@layer base {
+  :root {
+    background-color: var(--color-bg-main);
+    color: var(--color-text-dark);
+    font-family: var(--font-sans);
+  }
+
+  body {
+    @apply antialiased;
+    margin: 0;
+  }
+}
+
+@layer components {
+
+  /* Layout Governance */
+  .system-grid {
+    @apply grid gap-md;
+    /* Grid-stable layout: 5 cols desktop, 3 tablet, 2 mobile */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 768px) {
+    .system-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .system-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  .system-flex-col {
+    @apply flex flex-col gap-sm;
+  }
+
+  .system-flex-row {
+    @apply flex flex-row items-center gap-sm;
+  }
+}
+
+/* Forbidden properties enforced by quiet visual language */
+/* No random colors, no margins, no animations as per prompt */
