@@ -1,19 +1,28 @@
-§# Python
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-.venv/
 venv/
+.venv/
 ENV/
 env/
 .env
+.env.local
 
 # Databases
 *.db
 *.sqlite3
+instance/*.db
+
+# Frontend
+node_modules/
+.next/
+dist/
+
+# Logs
+*.log
 
 # IDEs
 .vscode/
 .idea/
 .DS_Store
-node_modules
