@@ -15,6 +15,7 @@ class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     slug = db.Column(db.String(80), unique=True, nullable=False)
+    image_url = db.Column(db.String(255), nullable=True)
 
 class Product(db.Model):
     __tablename__ = "products"
@@ -29,9 +30,12 @@ class Product(db.Model):
         db.ForeignKey("categories.id"),
         nullable=False
     )
+    category = db.relationship("Category", backref="products")
 
     is_discounted = db.Column(db.Boolean, default=False)
     discount_percent = db.Column(db.Integer, nullable=True)
+    unit = db.Column(db.String(50), nullable=True)
+    badge = db.Column(db.String(50), nullable=True)
 
 class CartItem(db.Model):
     __tablename__ = "cart_items"
@@ -64,8 +68,22 @@ class Order(db.Model):
         nullable=False
     )
 
+    # Legacy fields (keep for backward compatibility)
     total_price = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default="pending", nullable=False)
+    
+    # New payment fields
+    payment_method = db.Column(db.String(50), nullable=True)
+    payment_status = db.Column(db.String(20), default="pending", nullable=True)
+    
+    # New order status field
+    order_status = db.Column(db.String(20), default="pending", nullable=True)
+    
+    # New pricing breakdown fields
+    subtotal = db.Column(db.Float, nullable=True)
+    logistics_fee = db.Column(db.Float, nullable=True)
+    total = db.Column(db.Float, nullable=True)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 

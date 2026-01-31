@@ -1,6 +1,7 @@
+"use client";
 import React from 'react';
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
-import { useStore } from '../context/StoreContext';
+import { useStore } from '@/context/StoreContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CartDrawer = () => {
@@ -41,32 +42,47 @@ const CartDrawer = () => {
                                     <p>Your cart is empty</p>
                                 </div>
                             ) : (
-                                cart.map(item => (
-                                    <div key={item.id} className="flex gap-md p-md bg-gray-50 rounded-lg">
-                                        <img src={item.image} className="w-16 h-16 rounded object-cover" />
-                                        <div className="flex-1 flex flex-col justify-between">
-                                            <h4 className="text-sm font-medium text-text-dark">{item.name}</h4>
-                                            <p className="text-sm font-bold text-primary">${item.price.toFixed(2)}</p>
-                                        </div>
-                                        <div className="flex items-center gap-md">
-                                            <div className="flex items-center gap-sm bg-white border border-gray-200 rounded px-sm py-1">
-                                                <button onClick={() => updateQuantity(item.id, -1)} className="text-text-muted"><Minus size={14} /></button>
-                                                <span className="text-xs font-bold w-4 text-center">{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.id, 1)} className="text-text-muted"><Plus size={14} /></button>
+                                <AnimatePresence initial={false}>
+                                    {cart.map(item => (
+                                        <motion.div
+                                            key={item.id}
+                                            layout
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -50, scale: 0.9 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="flex gap-md p-md bg-gray-50 rounded-lg"
+                                        >
+                                            <img src={item.image_url || item.image || 'https://via.placeholder.com/150'} className="w-16 h-16 rounded object-cover" />
+                                            <div className="flex-1 flex flex-col justify-between">
+                                                <h4 className="text-sm font-medium text-text-dark">{item.name}</h4>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-bold text-primary">₪{(item.price * item.quantity).toFixed(2)}</p>
+                                                    {item.quantity > 1 && (
+                                                        <span className="text-[10px] text-text-muted">(₪{item.price.toFixed(2)} each)</span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <button onClick={() => removeFromCart(item.id)} className="text-red-400 hover:text-red-600">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
+                                            <div className="flex items-center gap-md">
+                                                <div className="flex items-center gap-sm bg-white border border-gray-200 rounded px-sm py-1">
+                                                    <button onClick={() => updateQuantity(item.id, -1)} className="text-text-muted"><Minus size={14} /></button>
+                                                    <span className="text-xs font-bold w-4 text-center">{item.quantity}</span>
+                                                    <button onClick={() => updateQuantity(item.id, 1)} className="text-text-muted"><Plus size={14} /></button>
+                                                </div>
+                                                <button onClick={() => removeFromCart(item.id)} className="text-red-400 hover:text-red-600">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
                             )}
                         </div>
 
                         <div className="p-lg bg-gray-50 border-t border-gray-100 flex flex-col gap-lg">
                             <div className="flex items-center justify-between">
                                 <span className="text-text-muted font-medium">Subtotal</span>
-                                <span className="text-2xl font-bold text-text-dark">${total.toFixed(2)}</span>
+                                <span className="text-2xl font-bold text-text-dark">₪{total.toFixed(2)}</span>
                             </div>
                             <button
                                 onClick={checkout}

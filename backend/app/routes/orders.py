@@ -8,49 +8,60 @@ orders_bp = Blueprint("orders", __name__)
 @orders_bp.post("/orders/checkout")
 @jwt_required()
 def checkout():
+    """
+    Simplified Checkout endpoint (Mock Payment)
+    """
     user_id = int(get_jwt_identity())
+    data = request.get_json() or {}
 
+    # 1) Validate payload
+    payment_method = data.get("payment_method")
+    if not payment_method:
+        return jsonify({"message": "Invalid payload: payment_method required"}), 400
+
+    # 2) Validate cart
     cart_items = CartItem.query.filter_by(user_id=user_id).all()
     if not cart_items:
-        return jsonify({"message": "cart is empty"}), 400
+        return jsonify({"message": "Cart is empty"}), 400
 
-    total_price = 0.0
-    order_items = []
-
-    for item in cart_items:
-        product = Product.query.get(item.product_id)
-        line_total = product.price * item.quantity
-        total_price += line_total
-
-        order_items.append(
-            OrderItem(
-                product_id=product.id,
-                quantity=item.quantity,
-                price_at_purchase=product.price
-            )
-        )
+    # 3) Create Order & Calculate Total
+    subtotal = sum(item.product.price * item.quantity for item in cart_items)
+    logistics_fee = 10.0
+    total = subtotal + logistics_fee
 
     order = Order(
         user_id=user_id,
-        total_price=total_price
+        total_price=total,
+        status="processing",
+        payment_method=payment_method,
+        payment_status="paid (mock)",
+        order_status="processing",
+        subtotal=subtotal,
+        logistics_fee=logistics_fee,
+        total=total
     )
     db.session.add(order)
-    db.session.flush()  # للحصول على order.id
+    db.session.flush()
 
-    for oi in order_items:
-        oi.order_id = order.id
-        db.session.add(oi)
+    # 4) Move Cart → OrderItems & Delete Cart
+    for item in cart_items:
+        db.session.add(OrderItem(
+            order_id=order.id,
+            product_id=item.product_id,
+            quantity=item.quantity,
+            price_at_purchase=item.product.price
+        ))
+        db.session.delete(item)
 
-    # تفريغ السلة
-    CartItem.query.filter_by(user_id=user_id).delete()
-
+    # 5) Commit + Response
     db.session.commit()
 
     return jsonify({
-        "message": "order created",
+        "status": "success",
         "order_id": order.id,
-        "total_price": total_price
-    }), 201
+        "payment_status": "paid (mock)",
+        "total": total
+    }), 200
 
 @orders_bp.get("/orders")
 @jwt_required()
@@ -77,6 +88,12 @@ def order_history():
                 "order_id": order.id,
                 "total_price": order.total_price,
                 "status": order.status,
+                "payment_method": order.payment_method,
+                "payment_status": order.payment_status,
+                "order_status": order.order_status,
+                "subtotal": order.subtotal,
+                "logistics_fee": order.logistics_fee,
+                "total": order.total,
                 "created_at": order.created_at.isoformat()
             }
             for order in pagination.items
@@ -107,6 +124,12 @@ def order_details(order_id):
         "order_id": order.id,
         "total_price": order.total_price,
         "status": order.status,
+        "payment_method": order.payment_method,
+        "payment_status": order.payment_status,
+        "order_status": order.order_status,
+        "subtotal": order.subtotal,
+        "logistics_fee": order.logistics_fee,
+        "total": order.total,
         "created_at": order.created_at.isoformat(),
         "items": [
             {

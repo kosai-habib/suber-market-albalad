@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@theme {
+  /* Dynamic Theme Variables mapped to CSS variables */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+
+  --color-border: var(--border);
+
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+
+  /* Typography */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-heading: "Poppins", system-ui, sans-serif;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Shadows */
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 12px 30px rgba(0, 0, 0, 0.12);
+  --shadow-glass: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+@layer base {
+  :root {
+    --bg: #FCFCFC;
+    --surface: #FFFFFF;
+    --card: #F8FAFC;
+
+    --primary: #1B4D3E;
+    --primary-hover: #163F33;
+
+    --accent: #FFBF00;
+    --accent-hover: #E6AC00;
+
+    --text: #0F172A;
+    --text-muted: #64748B;
+
+    --border: #E5E7EB;
+
+    --success: #16A34A;
+    --danger: #DC2626;
+  }
+
+  .dark {
+    --bg: #060B14;
+    --surface: #0B1220;
+    --card: #0F172A;
+
+    --primary: #4ADE80;
+    --primary-hover: #22C55E;
+
+    --accent: #FFBF00;
+    --accent-hover: #E6AC00;
+
+    --text: #F8FAFC;
+    --text-muted: #94A3B8;
+
+    --border: rgba(255, 255, 255, 0.10);
+
+    --success: #22C55E;
+    --danger: #F87171;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    @apply antialiased min-h-screen transition-colors duration-300;
+    margin: 0;
+  }
+
+  h1 {
+    @apply font-heading text-[32px] font-bold tracking-tight text-[var(--text)];
+  }
+
+  h2 {
+    @apply font-heading text-[24px] font-bold tracking-tight text-[var(--text)];
+  }
+
+  h3 {
+    @apply font-heading text-[20px] font-bold tracking-tight text-[var(--text)];
+  }
+
+  input,
+  select,
+  textarea {
+    @apply bg-surface border border-border rounded-md px-4 py-3 text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent transition-all;
+  }
+}
+
+@layer components {
+  .container-custom {
+    @apply max-w-[1280px] mx-auto px-6;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-xl border border-border shadow-glass;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%);
+  }
+
+  .dark .glass-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.4) 100%);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .transition-premium {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
+
+/* Scrollbar Style */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

@@ -1,63 +1,127 @@
+"use client";
 import React from 'react';
-import { ShoppingCart, Star } from 'lucide-react';
-import { useStore } from '../context/StoreContext';
+import { ShoppingCart, Star, Plus } from 'lucide-react';
+import { useStore } from '@/context/StoreContext';
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
+import { api } from '../lib/api';
 
 /**
  * ProductCard Contract:
- * - Parent: Grid item only
- * - Internal: Flex column
- * - Image: aspect-square
- * - No margins, gap-based spacing
+ * - Image: 1:1 ratio
+ * - Title: Poppins, max 2 lines
+ * - Price: Poppins, always visible
+ * - CTA: Anchored bottom
  */
 export const ProductCard = ({ product }) => {
-    const { addToCart } = useStore();
+    const { addToCart, categories } = useStore();
+    
+    // Get category name from category_id
+    const category = categories.find(cat => cat.id === product.category_id);
+    const categoryName = category ? category.name : 'Product';
 
     return (
-        <div className="bg-bg-card border border-gray-100 p-md flex flex-col gap-sm rounded-lg hover:shadow-sm transition-shadow">
-            <div className="aspect-square w-full rounded-md overflow-hidden bg-gray-50 relative">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="group bg-surface border border-border p-4 flex flex-col gap-4 rounded-2xl hover:shadow-md transition-all duration-300"
+        >
+            <div className="aspect-square w-full rounded-xl overflow-hidden bg-bg relative">
                 <img
-                    src={product.image}
+                    src={product.image_url || product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 {product.is_discounted && (
-                    <div className="absolute top-sm right-sm bg-accent text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                    <div className="absolute top-3 right-3 bg-accent text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-soft">
                         SALE
                     </div>
                 )}
             </div>
 
-            <div className="flex flex-col gap-xs">
-                <span className="text-xs font-semibold text-primary uppercase tracking-wider">{product.category}</span>
-                <h4 className="text-sm font-medium text-text-dark line-clamp-1">{product.name}</h4>
+            <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{categoryName}</span>
+                <h4 className="text-body font-heading font-semibold text-text line-clamp-2 min-h-[3rem]">
+                    {product.name}
+                </h4>
+                <p className="text-xs text-text-muted">Price per kg</p>
+                <div className="flex items-center gap-1 mt-1">
+                    <Star size={12} className="fill-accent text-accent" />
+                    <span className="text-xs text-text-muted font-medium">4.5 (128 reviews)</span>
+                </div>
             </div>
 
-            <div className="mt-auto flex items-center justify-between">
+            <div className="mt-auto pt-2 flex items-center justify-between">
                 <div className="flex flex-col">
-                    <span className="text-lg font-bold text-text-dark">${product.price.toFixed(2)}</span>
-                    <div className="flex items-center gap-[0.125rem]">
-                        <Star size={10} className="fill-accent text-accent" />
-                        <span className="text-[10px] text-text-muted">{product.popularity / 20}</span>
-                    </div>
+                    <span className="text-xl font-heading font-bold text-text">₪{product.price.toFixed(2)}</span>
+                    {product.is_discounted && (
+                        <span className="text-xs text-text-muted line-through">₪{(product.price * 1.2).toFixed(2)}</span>
+                    )}
                 </div>
                 <button
-                    className="bg-primary text-white p-2 rounded-full hover:bg-opacity-90 transition-colors"
+                    className="bg-primary text-white p-4 rounded-xl hover:bg-primary-hover shadow-soft active:scale-95 transition-all"
                     onClick={() => addToCart(product)}
+                    aria-label={`Add ${product.name} to cart`}
                 >
-                    <ShoppingCart size={16} />
+                    <Plus size={20} strokeWidth={3} />
                 </button>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
 export const ProductGrid = ({ products }) => {
+    const { setLoading, setProducts, setCategories, loading } = useStore();
+
+    useEffect(() => {
+        setLoading(true);
+        // Fetch products and categories in parallel
+        Promise.all([
+            api.get("/products"),
+            api.get("/categories")
+        ]).then(([prodRes, catRes]) => {
+            setProducts(prodRes.data.items);
+            setCategories(catRes.data.items);
+        }).finally(() => setLoading(false));
+    }, [setLoading, setProducts, setCategories]);
+
+    if (loading) {
+        return (
+            <section className="py-8">
+                <div className="system-grid">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                        <div key={i} className="aspect-square w-full rounded-2xl bg-gray-100 animate-pulse" />
+                    ))}
+                </div>
+            </section>
+        );
+    }
+
     return (
-        <div className="system-grid">
-            {products.map(product => (
-                <ProductCard key={product.id} product={product} />
-            ))}
-        </div>
+        <section className="py-8">
+            <p className="text-sm text-text-muted mb-4 font-medium">
+                {products.length} products found
+            </p>
+            <div className="system-grid">
+                {products.map((product, idx) => (
+                    <ProductCard key={product.id} product={product} />
+                ))}
+            </div>
+            {products.length === 0 && (
+                <div className="py-20 text-center flex flex-col items-center gap-6 max-w-sm mx-auto">
+                    <div className="w-24 h-24 bg-bg rounded-3xl flex items-center justify-center text-text-muted/40 shadow-inner">
+                        <ShoppingCart size={48} strokeWidth={1.5} />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <h3 className="text-xl font-bold text-text">No items found</h3>
+                        <p className="text-sm text-text-muted leading-relaxed">
+                            We couldn't find any products matching your current filters. Try adjusting your selection.
+                        </p>
+                    </div>
+                </div>
+            )}
+        </section>
     );
 };

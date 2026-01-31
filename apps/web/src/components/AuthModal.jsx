@@ -1,16 +1,74 @@
+"use client";
 import React, { useState } from 'react';
 import { X, Mail, Lock, User as UserIcon } from 'lucide-react';
-import { useStore } from '../context/StoreContext';
+import { useStore } from '@/context/StoreContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '@/lib/api';
 
 const AuthModal = () => {
     const { isAuthModalOpen, setIsAuthModalOpen, login } = useStore();
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        login({ name: formData.name || formData.email.split('@')[0], email: formData.email });
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+        
+        setError('');
+        setLoading(true);
+
+        try {
+            if (isLogin) {
+                // Login
+                const response = await api.post('/auth/login', {
+                    email: formData.email,
+                    password: formData.password
+                });
+                
+                const { access_token } = response.data;
+                localStorage.setItem('token', access_token);
+                
+                login({ 
+                    name: formData.name || formData.email.split('@')[0], 
+                    email: formData.email,
+                    token: access_token
+                });
+            } else {
+                // Register
+                await api.post('/auth/register', {
+                    email: formData.email,
+                    password: formData.password
+                });
+                
+                // Auto login after registration
+                const loginResponse = await api.post('/auth/login', {
+                    email: formData.email,
+                    password: formData.password
+                });
+                
+                const { access_token } = loginResponse.data;
+                localStorage.setItem('token', access_token);
+                
+                login({ 
+                    name: formData.name || formData.email.split('@')[0], 
+                    email: formData.email,
+                    token: access_token
+                });
+            }
+        } catch (err) {
+            if (err.response) {
+                setError(err.response.data.message || 'An error occurred');
+            } else {
+                setError('Network error. Please try again.');
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -33,6 +91,7 @@ const AuthModal = () => {
                         <button
                             onClick={() => setIsAuthModalOpen(false)}
                             className="absolute top-md right-md text-text-muted p-sm hover:text-text-dark"
+                            aria-label="Close modal"
                         >
                             <X size={20} />
                         </button>
@@ -76,14 +135,19 @@ const AuthModal = () => {
                                     <input
                                         type="password"
                                         required
-                                        className="w-full pl-12 pr-md py-md bg-gray-50 border border-gray-100 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                        className={`w-full pl-12 pr-md py-md bg-gray-50 border rounded-lg text-sm focus:outline-none focus:ring-1 ${error ? 'border-red-300 focus:ring-red-500' : 'border-gray-100 focus:ring-primary'}`}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     />
                                 </div>
+                                {error && <p className="text-[10px] text-red-500 font-bold mt-1 italic">{error}</p>}
                             </div>
 
-                            <button className="w-full bg-primary text-white py-lg rounded-lg font-bold text-sm tracking-wide hover:bg-opacity-95 transition-all">
-                                {isLogin ? 'Sign In' : 'Create Account'}
+                            <button 
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-primary text-white py-lg rounded-lg font-bold text-sm tracking-wide hover:bg-opacity-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
                             </button>
                         </form>
 

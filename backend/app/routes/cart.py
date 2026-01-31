@@ -5,7 +5,7 @@ from app.models import CartItem, Product
 
 cart_bp = Blueprint("cart", __name__)
 
-@cart_bp.post("/cart/add")
+@cart_bp.post("/cart")
 @jwt_required()
 def add_to_cart():
     user_id = int(get_jwt_identity())
@@ -54,17 +54,21 @@ def view_cart():
 
     return jsonify([
         {
-            "item_id": item.id,
-            "product_id": item.product_id,
-            "product_name": item.product.name,
-            "price": item.product.price,
-            "quantity": item.quantity,
-            "total": item.product.price * item.quantity
+            "id": item.id,
+            "product": {
+                "id": item.product.id,
+                "name": item.product.name,
+                "price": item.product.price,
+                "image_url": item.product.image_url,
+                "unit": item.product.unit,
+                "badge": item.product.badge
+            },
+            "quantity": item.quantity
         }
         for item in items
     ])
 
-@cart_bp.delete("/cart/remove/<int:item_id>")
+@cart_bp.delete("/cart/<int:item_id>")
 @jwt_required()
 def remove_from_cart(item_id):
     user_id = int(get_jwt_identity())
@@ -82,7 +86,7 @@ def remove_from_cart(item_id):
 
     return jsonify({"message": "item removed from cart"}), 200
 
-@cart_bp.put("/cart/update/<int:item_id>")
+@cart_bp.route("/cart/<int:item_id>", methods=["PUT", "PATCH"])
 @jwt_required()
 def update_cart_item(item_id):
     user_id = int(get_jwt_identity())
