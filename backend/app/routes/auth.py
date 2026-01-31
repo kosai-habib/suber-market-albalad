@@ -12,22 +12,40 @@ from app.utils.serializers import user_to_dict
 
 auth_bp = Blueprint("auth", __name__)
 
+import re
+
 @auth_bp.post("/auth/register")
 @limiter.limit("20 per minute")
 def register():
     """
     تسجيل مستخدم جديد
     POST /api/auth/register
-    Body: { email, password }
+    Body: { email, password, phone }
     Response: { token, user: { id, name, email } }
     """
     data = request.get_json()
 
     email = data.get("email")
     password = data.get("password")
+    phone = data.get("phone")  # Optional in DB, but if provided, must be valid
 
     if not email or not password:
         return jsonify({"message": "email and password required"}), 400
+
+    # 1. Email Validation
+    if not re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email):
+        return jsonify({"message": "Invalid email format"}), 400
+
+    # 2. Password Validation (Min 8 chars, 1 letter, 1 number)
+    if len(password) < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
+        return jsonify({"message": "Password must be at least 8 chars with 1 letter and 1 number"}), 400
+
+    # 3. Phone Validation (Israel format: +9725XXXXXXXX)
+    if phone:
+        # Remove spaces/dashes for validation
+        clean_phone = re.sub(r"[\s\-]", "", phone)
+        if not re.match(r"^\+9725\d{8}$", clean_phone):
+             return jsonify({"message": "Phone number must be valid Israel format (+972 5X XXX XXXX)"}), 400
 
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "email already exists"}), 409
@@ -35,6 +53,7 @@ def register():
     user = User(
         email=email,
         password_hash=generate_password_hash(password)
+        # Phone storage would go here if model supported it
     )
 
     db.session.add(user)

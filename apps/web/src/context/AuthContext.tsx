@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { apiFetch } from '@/lib/apiClient';
 
 interface User {
     id: number;
@@ -31,16 +31,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
         try {
-            const res = await api.get('/auth/me');
-            setUser(res.data);
-            localStorage.setItem('user', JSON.stringify(res.data));
+            const res = await apiFetch('/api/auth/me');
+            if (!res.ok) throw new Error('Failed to fetch profile');
+            const data = await res.json();
+            setUser(data);
+            localStorage.setItem('user', JSON.stringify(data));
         } catch (err: any) {
             console.error('Failed to fetch profile', err);
             // If network error or 401, clear invalid token
-            if (err.code === 'ERR_NETWORK' || err.response?.status === 401) {
+            if (err.name === 'TypeError' || err.status === 401) {
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
                 localStorage.removeItem('user');
+                localStorage.removeItem('user_id');
                 setUser(null);
             }
         } finally {
@@ -60,8 +63,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const login = (accessToken: string, refreshToken: string, userData: User) => {
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', refreshToken);
+        localStorage.setItem('user_id', userData.id.toString());
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
+        window.dispatchEvent(new Event('auth-changed'));
     };
 
     const logout = () => {

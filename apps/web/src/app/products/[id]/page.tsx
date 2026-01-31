@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { apiFetch } from '@/lib/apiClient';
 import { useCart } from '@/context/CartContext';
 import { motion } from 'framer-motion';
 import { ShoppingCart, ArrowLeft, Star, ShieldCheck, Truck, RefreshCcw, Loader2, CheckCircle } from 'lucide-react';
@@ -22,8 +22,11 @@ export default function ProductDetailsPage() {
         const fetchProduct = async () => {
             try {
                 setLoading(true);
-                const res = await api.get(`/products/${id}`);
-                setProduct(res.data);
+                const res = await apiFetch(`/api/products/${id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setProduct(data);
+                }
             } catch (err) {
                 console.error(err);
             } finally {

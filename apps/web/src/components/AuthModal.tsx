@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { api } from '@/lib/api';
+import { apiFetch } from '@/lib/apiClient';
 import { X, Mail, Lock, ArrowRight, Loader2, Sparkles, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,24 +25,66 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+
+        // Frontend Validation
+        const emailRegex = /^[\w.-]+@[\w.-]+\.\w+$/;
+        const passwordMinLen = 8;
+        const phoneRegex = /^\+9725\d{8}$/;
+
+        if (!emailRegex.test(email)) {
+            setError('Please enter a valid email address (example@domain.com)');
+            setLoading(false);
+            return;
+        }
+
+        if (password.length < passwordMinLen || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+            setError('Password must be at least 8 characters with 1 letter and 1 number');
+            setLoading(false);
+            return;
+        }
+
+        if (!isLogin && phone) {
+            const cleanPhone = phone.replace(/[\s-]/g, '');
+            if (!phoneRegex.test(cleanPhone)) {
+                setError('Phone must be in Israel format: +972 5X XXX XXXX');
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
-            const endpoint = isLogin ? '/auth/login' : '/auth/register';
+            const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
             const payload = isLogin
                 ? { email, password }
                 : { email, password, phone };
 
-            const res = await api.post(endpoint, payload);
+            const res = await apiFetch(endpoint, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || errorData.error || 'Authentication failed.');
+            }
 
             if (isLogin) {
-                login(res.data.access_token, res.data.refresh_token, res.data.user);
+                const data = await res.json();
+                login(data.access_token, data.refresh_token, data.user);
                 onClose();
             } else {
-                const loginRes = await api.post('/auth/login', { email, password });
-                login(loginRes.data.access_token, loginRes.data.refresh_token, loginRes.data.user);
+                // After register, auto-login
+                const loginRes = await apiFetch('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                if (!loginRes.ok) throw new Error('Registration success, but auto-login failed.');
+                const loginData = await loginRes.json();
+                login(loginData.access_token, loginData.refresh_token, loginData.user);
                 onClose();
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || err.response?.data?.error || 'Authentication failed.');
+            setError(err.message || 'Authentication failed.');
         } finally {
             setLoading(false);
         }
@@ -65,7 +107,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="relative w-full max-w-md glass-card rounded-2xl overflow-hidden border border-white/20 dark:border-white/5 shadow-2xl"
+                    className="relative w-full max-w-md glass-card rounded-2xl overflow-hidden border border-white/20 dark:border-white/5 shadow-2xl max-h-[90vh] flex flex-col"
                     onClick={e => e.stopPropagation()}
                 >
                     {/* Ambient Backgrounds */}
@@ -73,14 +115,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-accent/10 rounded-full blur-[80px] pointer-events-none" />
 
                     {/* Header */}
-                    <div className="p-8 border-b border-border/10 flex justify-between items-center relative z-10">
+                    <div className="p-8 border-b border-border/10 flex justify-between items-start relative z-10 flex-shrink-0">
                         <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="p-2 bg-primary/10 rounded-lg backdrop-blur-md">
-                                    <Sparkles size={16} className="text-primary" />
-                                </div>
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70">Secure Sign In</span>
-                            </div>
                             <h2 className="text-2xl font-heading font-black text-text tracking-tight leading-tight">
                                 {isLogin ? (
                                     <>Welcome back to <br />Albalad Market</>
@@ -97,7 +133,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                         </button>
                     </div>
 
-                    <div className="p-8 max-h-[80vh] overflow-y-auto custom-scrollbar relative z-10">
+                    <div className="p-8 overflow-y-auto custom-scrollbar relative z-10 flex-1">
                         {error && (
                             <motion.div
                                 initial={{ opacity: 0, x: -10 }}
@@ -109,7 +145,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                             </motion.div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-5 w-full">
                             <div className="flex flex-col gap-2">
                                 <label className="text-xs font-bold text-text ml-1">Email address</label>
                                 <div className="relative group">
@@ -129,18 +165,25 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
-                                    className="flex flex-col gap-2 overflow-hidden"
+                                    className="flex flex-col gap-2 overflow-hidden w-full"
                                 >
-                                    <label className="text-xs font-bold text-text ml-1">Phone number</label>
+                                    <label className="text-xs font-bold text-text ml-1">Phone number (Israel)</label>
                                     <div className="relative group">
                                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors" size={18} />
                                         <input
                                             type="tel"
                                             required
                                             value={phone}
-                                            onChange={(e) => setPhone(e.target.value)}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                // Allow only digits, spaces, plus, and dashes
+                                                if (/^[0-9+\-\s]*$/.test(val)) {
+                                                    setPhone(val);
+                                                }
+                                            }}
                                             className="w-full h-14 pl-12 pr-4 bg-white/40 dark:bg-black/20 border border-border/50 rounded-xl focus:border-primary focus:bg-white/60 dark:focus:bg-black/40 transition-all outline-none text-sm font-medium shadow-inner"
-                                            placeholder="+970 5xx xxx xxx"
+                                            placeholder="+972 5X XXX XXXX"
+                                            dir="ltr"
                                         />
                                     </div>
                                 </motion.div>
@@ -202,12 +245,14 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                             </div>
                         </div>
 
+                        {/* Google Login Button - Accessible & Responsive */}
                         <button
                             type="button"
-                            className="mt-6 w-full h-14 bg-white/30 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-xl flex items-center justify-center gap-3 hover:bg-white/50 dark:hover:bg-white/10 transition-all shadow-sm text-text font-bold group"
+                            aria-label="Continue with Google"
+                            className="mt-6 w-full h-14 bg-white/30 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-xl flex items-center justify-center gap-3 hover:bg-white/50 dark:hover:bg-white/10 transition-all shadow-sm text-text font-bold group cursor-pointer focus:ring-2 focus:ring-primary focus:outline-none"
                         >
                             <div className="bg-white p-2 rounded-lg shadow-lg group-hover:scale-110 transition-transform">
-                                <svg width="16" height="16" viewBox="0 0 24 24">
+                                <svg width="16" height="16" viewBox="0 0 24 24" role="img" aria-hidden="true">
                                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-1 .67-2.28 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                                     <path d="M5.84 14.09c-.22-.67-.35-1.39-.35-2.09s.13-1.42.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />

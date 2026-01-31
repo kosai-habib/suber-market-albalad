@@ -1,10 +1,9 @@
 "use client";
 export const dynamic = 'force-dynamic';
 
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { apiFetch, requireAuth } from '@/lib/apiClient';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -44,18 +43,27 @@ export default function OrdersPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!authLoading && !isAuthenticated) {
-            router.push('/');
+        if (!authLoading) {
+            try {
+                requireAuth(router.push);
+            } catch (e) {
+                // Handled
+            }
         }
-    }, [isAuthenticated, authLoading, router]);
+    }, [authLoading, router]);
 
     useEffect(() => {
         const fetchOrders = async () => {
             if (!isAuthenticated) return;
             try {
                 setLoading(true);
-                const res = await api.get('/orders');
-                setOrders(res.data.items || []);
+                const res = await apiFetch('/api/orders');
+                if (res.ok) {
+                    const data = await res.json();
+                    setOrders(data.items || []);
+                } else {
+                    setError('Order retrieval failed.');
+                }
             } catch (err) {
                 setError('Order retrieval failed.');
             } finally {
@@ -69,45 +77,45 @@ export default function OrdersPage() {
         switch (status?.toLowerCase()) {
             case 'completed':
             case 'succeeded':
-            case 'processing': return 'bg-green-500/10 text-green-500 border-green-500/20';
-            case 'pending': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+            case 'processing': return 'bg-success/10 text-success border-success/20';
+            case 'pending': return 'bg-accent/10 text-accent border-accent/20';
             case 'failed':
-            case 'cancelled': return 'bg-red-500/10 text-red-500 border-red-500/20';
-            default: return 'bg-white/5 text-white/40 border-white/10';
+            case 'cancelled': return 'bg-danger/10 text-danger border-danger/20';
+            default: return 'bg-surface text-text-muted border-border';
         }
     };
 
     if (authLoading || loading) {
         return (
             <div className="min-h-[calc(100vh-80px)] flex items-center justify-center">
-                <Loader2 className="animate-spin text-[var(--primary)] w-12 h-12" />
+                <Loader2 className="animate-spin text-primary w-12 h-12" />
             </div>
         );
     }
 
     return (
-        <div className="container-custom py-12">
-            <Link href="/" className="inline-flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--primary)] transition-all mb-10 font-black text-xs uppercase tracking-widest group">
+        <div className="container-custom py-12 text-text">
+            <Link href="/" className="inline-flex items-center gap-2 text-text-muted hover:text-primary transition-all mb-10 font-black text-xs uppercase tracking-widest group">
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 Continue Shopping
             </Link>
 
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
                 <div className="flex flex-col gap-3">
-                    <h1 className="text-4xl font-heading font-black text-[var(--text-main)] tracking-tight">Order History</h1>
-                    <p className="text-[var(--text-muted)] font-medium">Tracking and managing your fresh selections @ Albalad Market.</p>
+                    <h1 className="text-4xl font-heading font-black text-text tracking-tight">Order History</h1>
+                    <p className="text-text-muted font-medium">Tracking and managing your fresh selections @ Albalad Market.</p>
                 </div>
 
                 <div className="flex items-center gap-4">
                     <div className="relative group hidden md:block">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--primary)] transition-colors" size={18} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors" size={18} />
                         <input
                             type="text"
                             placeholder="Case-insensitive search..."
-                            className="pl-12 pr-6 py-3 bg-[var(--bg-surface)] border border-[var(--border-soft)] rounded-[var(--radius-md)] text-sm text-[var(--text-main)] focus:border-[var(--primary)] transition-all w-64 shadow-soft"
+                            className="pl-12 pr-6 py-3 bg-card border border-border rounded-xl text-sm text-text focus:border-primary focus:ring-1 focus:ring-primary transition-all w-64 shadow-sm outline-none"
                         />
                     </div>
-                    <button className="flex items-center gap-2 px-6 py-3 bg-[var(--bg-surface)] border border-[var(--border-soft)] rounded-[var(--radius-md)] text-sm font-bold text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-all shadow-soft">
+                    <button className="flex items-center gap-2 px-6 py-3 bg-card border border-border rounded-xl text-sm font-bold text-text hover:bg-surface transition-all shadow-sm active:scale-95">
                         <Filter size={18} />
                         Filters
                     </button>
@@ -115,21 +123,21 @@ export default function OrdersPage() {
             </header>
 
             {error ? (
-                <div className="py-20 text-center flex flex-col items-center gap-6 bg-[var(--bg-surface)] border border-dashed border-red-200 rounded-[var(--radius-xl)]">
-                    <AlertCircle className="text-red-500" size={56} />
-                    <h2 className="text-2xl font-bold text-[var(--text-main)]">{error}</h2>
-                    <button onClick={() => window.location.reload()} className="btn-primary">Try Again</button>
+                <div className="py-20 text-center flex flex-col items-center gap-6 bg-card border border-dashed border-danger/30 rounded-[32px]">
+                    <AlertCircle className="text-danger" size={56} />
+                    <h2 className="text-2xl font-bold text-text">{error}</h2>
+                    <button onClick={() => window.location.reload()} className="btn-primary px-8 h-12 rounded-xl">Try Again</button>
                 </div>
             ) : orders.length === 0 ? (
-                <div className="py-24 text-center flex flex-col items-center gap-8 bg-[var(--bg-surface)] border border-dashed border-[var(--border-soft)] rounded-[var(--radius-xl)] shadow-soft">
-                    <div className="w-24 h-24 bg-[var(--bg-main)] rounded-full flex items-center justify-center text-[var(--text-muted)] opacity-30">
+                <div className="py-24 text-center flex flex-col items-center gap-8 bg-card border border-dashed border-border rounded-[32px] shadow-soft">
+                    <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center text-text-muted opacity-30">
                         <Package size={48} strokeWidth={1} />
                     </div>
                     <div className="flex flex-col gap-2">
-                        <h2 className="text-3xl font-heading font-black text-[var(--text-main)]">No orders yet</h2>
-                        <p className="text-[var(--text-muted)] max-w-sm mx-auto font-medium">Your basket history is clear. Start exploring our fresh products!</p>
+                        <h2 className="text-3xl font-heading font-black text-text">No orders yet</h2>
+                        <p className="text-text-muted max-w-sm mx-auto font-medium">Your basket history is clear. Start exploring our fresh products!</p>
                     </div>
-                    <Link href="/" className="btn-primary">Start Shopping</Link>
+                    <Link href="/" className="btn-primary h-12 px-8 rounded-xl flex items-center gap-2">Started Shopping <ArrowLeft size={18} className="rotate-180" /></Link>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-6">
@@ -140,20 +148,20 @@ export default function OrdersPage() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="group bg-[var(--bg-surface)] border border-[var(--border-soft)] rounded-[var(--radius-lg)] p-6 md:p-8 hover:shadow-card hover:border-[var(--primary)]/30 transition-all flex flex-col md:flex-row md:items-center justify-between gap-8 relative overflow-hidden shadow-soft"
+                                className="group bg-card border border-border rounded-[24px] p-6 md:p-8 hover:shadow-card hover:border-primary/30 transition-all flex flex-col md:flex-row md:items-center justify-between gap-8 relative overflow-hidden shadow-soft"
                             >
                                 <div className="flex items-center gap-6 relative z-10">
-                                    <div className="w-16 h-16 bg-[var(--bg-main)] rounded-[var(--radius-md)] flex items-center justify-center text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-all duration-300 border border-[var(--border-soft)]">
+                                    <div className="w-16 h-16 bg-bg rounded-2xl flex items-center justify-center text-text-muted group-hover:text-primary transition-all duration-300 border border-border">
                                         <Package size={28} />
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <h3 className="text-xl font-heading font-black text-[var(--text-main)]">Order #{order.order_id}</h3>
-                                        <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                                        <h3 className="text-xl font-heading font-black text-text">Order #{order.order_id}</h3>
+                                        <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-text-muted">
                                             <span className="flex items-center gap-2">
                                                 <Calendar size={14} />
                                                 {new Date(order.created_at).toLocaleDateString()}
                                             </span>
-                                            <span className="w-1.5 h-1.5 bg-[var(--border-soft)] rounded-full" />
+                                            <span className="w-1.5 h-1.5 bg-border rounded-full" />
                                             <span>Verified Transaction</span>
                                         </div>
                                     </div>
@@ -161,19 +169,19 @@ export default function OrdersPage() {
 
                                 <div className="flex flex-wrap items-center gap-8 md:gap-12 relative z-10">
                                     <div className="flex flex-col items-end gap-1">
-                                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Total Value</span>
-                                        <span className="text-2xl font-heading font-black text-white tracking-tight">₪{order.total?.toFixed(2) || order.total_price.toFixed(2)}</span>
+                                        <span className="text-[10px] font-black text-text-muted/60 uppercase tracking-widest">Total Value</span>
+                                        <span className="text-2xl font-heading font-black text-text tracking-tight">₪{order.total?.toFixed(2) || order.total_price.toFixed(2)}</span>
                                     </div>
 
                                     <div className="flex flex-col items-end gap-2">
-                                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Process State</span>
+                                        <span className="text-[10px] font-black text-text-muted/60 uppercase tracking-widest">Process State</span>
                                         <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black tracking-widest uppercase ${getStatusStyles(order.order_status || order.status)}`}>
                                             {order.order_status || order.status}
                                         </div>
                                     </div>
 
                                     <div className="flex flex-col items-end gap-2">
-                                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Payment</span>
+                                        <span className="text-[10px] font-black text-text-muted/60 uppercase tracking-widest">Payment</span>
                                         <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black tracking-widest uppercase ${getStatusStyles(order.payment_status)}`}>
                                             {order.payment_status || 'Unknown'}
                                         </div>
@@ -181,7 +189,7 @@ export default function OrdersPage() {
 
                                     <Link
                                         href={`/orders/${order.order_id}`}
-                                        className="w-12 h-12 rounded-[var(--radius-md)] border border-[var(--border-soft)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--primary)] hover:text-white hover:border-[var(--primary)] transition-all duration-300 shadow-soft"
+                                        className="w-12 h-12 rounded-xl border border-border flex items-center justify-center text-text-muted hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm"
                                     >
                                         <ChevronRight size={20} />
                                     </Link>

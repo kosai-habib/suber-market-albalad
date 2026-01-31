@@ -1,79 +1,85 @@
 @import "tailwindcss";
 
 @theme {
-  /* Dynamic Theme Variables mapped to CSS variables */
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-card: var(--card);
 
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
 
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
 
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
+  --color-text-inverse: var(--text-inverse);
 
   --color-border: var(--border);
 
   --color-success: var(--success);
   --color-danger: var(--danger);
 
-  /* Typography */
   --font-sans: "Inter", system-ui, sans-serif;
   --font-heading: "Poppins", system-ui, sans-serif;
 
-  /* Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
 
-  /* Shadows */
-  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-card: 0 12px 30px rgba(0, 0, 0, 0.12);
-  --shadow-glass: 0 10px 30px rgba(0, 0, 0, 0.18);
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 12px 24px rgba(0, 0, 0, 0.08);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 @layer base {
   :root {
-    --bg: #FCFCFC;
+    --bg: #F8FAFC;
+    /* Slightly cooler grey for light mode background */
     --surface: #FFFFFF;
-    --card: #F8FAFC;
+    --card: #FFFFFF;
 
     --primary: #1B4D3E;
     --primary-hover: #163F33;
+    --primary-soft: rgba(27, 77, 62, 0.08);
 
-    --accent: #FFBF00;
-    --accent-hover: #E6AC00;
+    --accent: #FFC107;
+    /* A more standard amber for better contrast */
+    --accent-hover: #FFB300;
 
     --text: #0F172A;
     --text-muted: #64748B;
+    --text-inverse: #FFFFFF;
 
-    --border: #E5E7EB;
+    --border: #E2E8F0;
 
-    --success: #16A34A;
-    --danger: #DC2626;
+    --success: #10B981;
+    --danger: #EF4444;
   }
 
   .dark {
-    --bg: #060B14;
-    --surface: #0B1220;
-    --card: #0F172A;
+    --bg: #020617;
+    /* Deep slate background */
+    --surface: #0F172A;
+    --card: #1E293B;
 
-    --primary: #4ADE80;
-    --primary-hover: #22C55E;
+    --primary: #34D399;
+    /* Lighter green for dark mode */
+    --primary-hover: #10B981;
+    --primary-soft: rgba(52, 211, 153, 0.1);
 
-    --accent: #FFBF00;
-    --accent-hover: #E6AC00;
+    --accent: #FFD54F;
+    --accent-hover: #FFCA28;
 
-    --text: #F8FAFC;
+    --text: #F1F5F9;
     --text-muted: #94A3B8;
+    --text-inverse: #020617;
 
-    --border: rgba(255, 255, 255, 0.10);
+    --border: #334155;
 
-    --success: #22C55E;
+    --success: #34D399;
     --danger: #F87171;
   }
 
@@ -81,63 +87,89 @@
     background-color: var(--bg);
     color: var(--text);
     font-family: var(--font-sans);
-    @apply antialiased min-h-screen transition-colors duration-300;
+    @apply antialiased min-h-screen transition-colors duration-300 selection:bg-primary/20 selection:text-primary;
     margin: 0;
   }
 
-  h1 {
-    @apply font-heading text-[32px] font-bold tracking-tight text-[var(--text)];
-  }
-
-  h2 {
-    @apply font-heading text-[24px] font-bold tracking-tight text-[var(--text)];
-  }
-
-  h3 {
-    @apply font-heading text-[20px] font-bold tracking-tight text-[var(--text)];
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    @apply tracking-tight font-bold text-[var(--text)];
   }
 
   input,
   select,
   textarea {
-    @apply bg-surface border border-border rounded-md px-4 py-3 text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent transition-all;
+    @apply bg-surface border border-border rounded-[var(--radius-md)] px-4 py-3 text-text placeholder:text-text-muted/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200;
   }
 }
 
 @layer components {
   .container-custom {
-    @apply max-w-[1280px] mx-auto px-6;
+    @apply max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Interactive Elements */
+  .btn {
+    @apply inline-flex items-center justify-center font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-text-inverse hover:bg-primary-hover shadow-lg shadow-primary/20;
+  }
+
+  .btn-accent {
+    @apply btn bg-accent text-text hover:bg-accent-hover shadow-lg shadow-accent/20;
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-border text-text hover:border-primary hover:text-primary hover:bg-primary-soft;
+  }
+
+  .btn-ghost {
+    @apply btn text-text-muted hover:text-primary hover:bg-primary-soft;
+  }
+
+  .btn-glass-primary {
+    @apply btn bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 hover:border-white/40 shadow-glass;
+  }
+
+  /* Cards */
+  .card-base {
+    @apply bg-card border border-border rounded-[var(--radius-lg)] shadow-soft overflow-hidden;
   }
 
   .glass-card {
-    @apply backdrop-blur-xl border border-border shadow-glass;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%);
+    @apply backdrop-blur-xl border border-white/20 bg-white/60 shadow-glass;
   }
 
   .dark .glass-card {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.4) 100%);
-    border-color: rgba(255, 255, 255, 0.08);
+    @apply border-white/10 bg-black/40;
   }
 
+  /* Utility */
   .transition-premium {
-    @apply transition-all duration-300 ease-in-out;
+    @apply transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .text-balance {
+    text-wrap: balance;
   }
 }
 
-/* Scrollbar Style */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg);
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  @apply bg-border rounded-full border-[3px] border-solid border-transparent bg-clip-content hover:bg-text-muted/50;
 }

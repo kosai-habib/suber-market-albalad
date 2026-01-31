@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { apiFetch } from '@/lib/apiClient';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryFilter } from '@/components/CategoryFilter';
 import { GridSkeleton } from '@/components/LoadingSkeleton';
@@ -30,21 +30,32 @@ function HomeContent() {
     const fetchData = async () => {
       try {
         setLoading(true);
+
+        const buildQuery = (params: any) => {
+          const s = new URLSearchParams();
+          Object.entries(params).forEach(([k, v]) => {
+            if (v) s.append(k, v.toString());
+          });
+          return s.toString() ? `?${s.toString()}` : '';
+        };
+
         const [prodRes, catRes] = await Promise.all([
-          api.get('/products', {
-            params: {
-              q: query,
-              category: catParam,
-              min_price: minPriceParam,
-              max_price: maxPriceParam
-            }
-          }),
-          api.get('/categories')
+          apiFetch(`/api/products${buildQuery({
+            q: query,
+            category: catParam,
+            min_price: minPriceParam,
+            max_price: maxPriceParam
+          })}`),
+          apiFetch('/api/categories')
         ]);
 
-        // Handle both direct array or { items: [] } pattern
-        setProducts(Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data.items || []));
-        setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data.items || []));
+        if (!prodRes.ok || !catRes.ok) throw new Error('Failed to fetch data');
+
+        const prodData = await prodRes.json();
+        const catData = await catRes.json();
+
+        setProducts(Array.isArray(prodData) ? prodData : (prodData.items || []));
+        setCategories(Array.isArray(catData) ? catData : (catData.items || []));
       } catch (err) {
         console.error(err);
       } finally {
@@ -65,33 +76,41 @@ function HomeContent() {
   return (
     <div className="flex flex-col gap-12 pb-20 bg-bg text-text">
       {/* Hero Banner - Fresh Design */}
-      <section className="bg-primary py-16 text-white overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2" />
-        <div className="container-custom flex flex-col md:flex-row items-center gap-12 relative z-10">
-          <div className="flex-grow flex flex-col gap-6">
-            <div className="flex items-center gap-2 bg-white/10 w-fit px-4 py-1.5 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-[0.2em]">
-              <Sparkles size={14} className="text-accent" />
-              Trusted Freshness Guaranteed
-            </div>
-            <h1 className="text-4xl md:text-6xl font-heading font-black leading-tight text-white">
-              Quality Fresh Food <br />
-              <span className="text-accent">Delivered to You</span>
+      {/* Hero Banner - Mobile First, Clean, Subtle Motion */}
+      <section className="bg-[#1B4D3E] dark:bg-[#0c1f1a] pt-12 pb-16 md:py-24 overflow-hidden relative transition-colors duration-500">
+        {/* Abstract Background Element (Subtle) */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 blur-[100px] rounded-full translate-x-1/3 -translate-y-1/3 pointer-events-none" />
+
+        <div className="container-custom flex flex-col md:flex-row items-center gap-10 md:gap-20 relative z-10">
+          {/* Text Content */}
+          <div className="flex-1 flex flex-col gap-4 text-center md:text-left">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-black leading-[1.1] text-white tracking-tight">
+              Quality Fresh Food <br className="hidden md:block" />
+              <span className="text-accent">Delivered</span>
             </h1>
-            <p className="text-lg text-white/80 max-w-xl font-medium leading-relaxed">
-              Order your daily groceries from Albalad Market and experience the ultimate freshness of local and imported products.
+            <p className="text-base md:text-lg text-white/80 max-w-lg mx-auto md:mx-0 font-medium leading-relaxed">
+              Curated local and imported groceries, delivered fresh.
             </p>
-            <div className="flex items-center gap-4 mt-4">
-              <button className="bg-accent hover:bg-accent-hover text-black font-bold py-3 px-10 rounded-md transition-premium shadow-soft">Get Started</button>
-              <button className="px-8 py-3 rounded-md border border-white/20 font-bold hover:bg-white/5 transition-premium">Today's Deals</button>
-            </div>
           </div>
-          <div className="hidden lg:block w-96 h-96 bg-white/5 rounded-xl border border-white/10 p-6 backdrop-blur-3xl shadow-soft">
-            <div className="w-full h-full rounded-lg overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"
+
+          {/* Image Content - Subtle Motion */}
+          <div className="flex-1 w-full max-w-[500px] md:max-w-none">
+            <div className="aspect-[4/3] md:aspect-square lg:aspect-[4/3] w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-white/5 backdrop-blur-sm relative">
+              <motion.img
+                initial={{ scale: 1 }}
+                animate={{ scale: 1.05 }}
+                transition={{
+                  duration: 10,
+                  ease: "easeInOut",
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+                src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1200"
                 className="w-full h-full object-cover"
-                alt="Fresh groceries"
+                alt="Premium fresh groceries"
               />
+              {/* Subtle Overlay for better blend if needed, kept minimal */}
+              <div className="absolute inset-0 bg-primary/10 mix-blend-multiply" />
             </div>
           </div>
         </div>

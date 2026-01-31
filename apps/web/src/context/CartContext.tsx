@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { apiFetch } from '@/lib/apiClient';
 import { useAuth } from './AuthContext';
 
 interface Product {
@@ -40,8 +40,13 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         if (!isAuthenticated) return;
         try {
             setIsLoading(true);
-            const res = await api.get('/cart');
-            setCart(res.data);
+            const res = await apiFetch('/api/cart'); // Updated to apiFetch and /api prefix
+            if (res.ok) {
+                const data = await res.json(); // JSON parsing
+                setCart(data);
+            } else {
+                console.error('Failed to fetch cart:', res.status, res.statusText);
+            }
         } catch (err) {
             console.error('Failed to fetch cart', err);
         } finally {
@@ -66,7 +71,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         try {
-            await api.post('/cart', { product_id: product.id, quantity: 1 });
+            await apiFetch('/api/cart', { // Updated to apiFetch and /api prefix
+                method: 'POST',
+                body: JSON.stringify({ product_id: product.id, quantity: 1 })
+            });
             await fetchCart();
         } catch (err) {
             console.error(err);
@@ -79,7 +87,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
         try {
-            await api.patch(`/cart/${id}`, { quantity });
+            await apiFetch(`/api/cart/${id}`, { // Updated to apiFetch and /api prefix
+                method: 'PATCH',
+                body: JSON.stringify({ quantity })
+            });
             await fetchCart();
         } catch (err) {
             console.error(err);
@@ -92,7 +103,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
         try {
-            await api.delete(`/cart/${id}`);
+            await apiFetch(`/api/cart/${id}`, { // Updated to apiFetch and /api prefix
+                method: 'DELETE'
+            });
             await fetchCart();
         } catch (err) {
             console.error(err);

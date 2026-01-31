@@ -12,12 +12,12 @@ def checkout():
     Simplified Checkout endpoint (Mock Payment)
     """
     user_id = int(get_jwt_identity())
-    data = request.get_json() or {}
+    data = request.get_json(force=True)
 
-    # 1) Validate payload
-    payment_method = data.get("payment_method")
-    if not payment_method:
-        return jsonify({"message": "Invalid payload: payment_method required"}), 400
+    if 'payment_method' not in data:
+        return jsonify({'error': 'payment_method is required'}), 400
+
+    payment_method = data['payment_method']
 
     # 2) Validate cart
     cart_items = CartItem.query.filter_by(user_id=user_id).all()

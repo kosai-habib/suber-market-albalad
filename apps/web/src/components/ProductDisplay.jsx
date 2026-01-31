@@ -4,7 +4,7 @@ import { ShoppingCart, Star, Plus } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { motion } from 'framer-motion';
 import { useEffect } from 'react';
-import { api } from '../lib/api';
+import { apiFetch } from '../lib/apiClient';
 
 /**
  * ProductCard Contract:
@@ -15,7 +15,7 @@ import { api } from '../lib/api';
  */
 export const ProductCard = ({ product }) => {
     const { addToCart, categories } = useStore();
-    
+
     // Get category name from category_id
     const category = categories.find(cat => cat.id === product.category_id);
     const categoryName = category ? category.name : 'Product';
@@ -79,11 +79,13 @@ export const ProductGrid = ({ products }) => {
         setLoading(true);
         // Fetch products and categories in parallel
         Promise.all([
-            api.get("/products"),
-            api.get("/categories")
-        ]).then(([prodRes, catRes]) => {
-            setProducts(prodRes.data.items);
-            setCategories(catRes.data.items);
+            apiFetch("/api/products"),
+            apiFetch("/api/categories")
+        ]).then(async ([prodRes, catRes]) => {
+            const prodData = await prodRes.json();
+            const catData = await catRes.json();
+            setProducts(prodData.items || prodData);
+            setCategories(catData.items || catData);
         }).finally(() => setLoading(false));
     }, [setLoading, setProducts, setCategories]);
 

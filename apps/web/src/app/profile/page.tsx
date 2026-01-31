@@ -6,18 +6,28 @@ import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import { User, Mail, Calendar, MapPin, Package, Heart, Settings, Shield, Sparkles } from 'lucide-react';
+import { requireAuth } from '@/lib/apiClient';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
+    const router = useRouter();
 
-    if (!user) {
-        return (
-            <div className="container-custom py-32 text-center">
-                <h1 className="text-2xl font-heading font-black text-[var(--text-main)]">Identification Required</h1>
-                <p className="text-[var(--text-muted)] mt-2 font-medium">Please sign in to access your profile data.</p>
-            </div>
-        );
-    }
+    React.useEffect(() => {
+        if (!authLoading) {
+            try {
+                requireAuth(router.push);
+            } catch (e) {
+                // Handled
+            }
+        }
+    }, [authLoading, router]);
+
+    if (authLoading || !user) return (
+        <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+    );
 
     return (
         <div className="container-custom py-12">
@@ -54,8 +64,8 @@ export default function ProfilePage() {
                             <button
                                 key={i}
                                 className={`flex items-center gap-3 px-6 py-3.5 rounded-[var(--radius-lg)] font-bold text-sm transition-all ${item.active
-                                        ? 'bg-[var(--primary)] text-white shadow-soft'
-                                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
+                                    ? 'bg-[var(--primary)] text-white shadow-soft'
+                                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
                                     }`}
                             >
                                 <item.icon size={18} />

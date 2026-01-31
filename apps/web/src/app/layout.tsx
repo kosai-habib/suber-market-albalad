@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import { Navbar } from '@/components/Navbar';
 
 export const metadata: Metadata = {
@@ -23,12 +24,14 @@ export default function RootLayout({
             </head>
             <body>
                 <AuthProvider>
-                    <CartProvider>
-                        <Navbar />
-                        <main className="min-h-[calc(100vh-80px)]">
-                            {children}
-                        </main>
-                    </CartProvider>
+                    <ThemeProvider>
+                        <CartProvider>
+                            <Navbar />
+                            <main className="min-h-[calc(100vh-80px)]">
+                                {children}
+                            </main>
+                        </CartProvider>
+                    </ThemeProvider>
                 </AuthProvider>
             </body>
         </html>
