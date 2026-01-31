@@ -3,6 +3,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.extensions import db
 from app.models import CartItem, Order, OrderItem, Product
 
+import random
+from datetime import datetime
+
 orders_bp = Blueprint("orders", __name__)
 
 @orders_bp.post("/orders/checkout")
@@ -29,8 +32,14 @@ def checkout():
     logistics_fee = 10.0
     total = subtotal + logistics_fee
 
+    # Generate Order Number: ALB-YYYY-XXXXX
+    order_number = f"ALB-{datetime.utcnow().year}-{random.randint(10000, 99999)}"
+    paid_at = datetime.utcnow()
+
     order = Order(
         user_id=user_id,
+        order_number=order_number,
+        paid_at=paid_at,
         total_price=total,
         status="processing",
         payment_method=payment_method,
@@ -59,6 +68,8 @@ def checkout():
     return jsonify({
         "status": "success",
         "order_id": order.id,
+        "order_number": order.order_number,
+        "paid_at": order.paid_at.isoformat(),
         "payment_status": "paid (mock)",
         "total": total
     }), 200
@@ -86,6 +97,8 @@ def order_history():
         "items": [
             {
                 "order_id": order.id,
+                "order_number": order.order_number,
+                "paid_at": order.paid_at.isoformat() if order.paid_at else None,
                 "total_price": order.total_price,
                 "status": order.status,
                 "payment_method": order.payment_method,
@@ -122,6 +135,8 @@ def order_details(order_id):
 
     return jsonify({
         "order_id": order.id,
+        "order_number": order.order_number,
+        "paid_at": order.paid_at.isoformat() if order.paid_at else None,
         "total_price": order.total_price,
         "status": order.status,
         "payment_method": order.payment_method,

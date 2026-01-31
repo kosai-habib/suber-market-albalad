@@ -30,6 +30,8 @@ interface OrderItem {
 
 interface OrderDetails {
     order_id: number;
+    order_number?: string;
+    paid_at?: string;
     total_price: number;
     status: string;
     payment_method: string;
@@ -136,7 +138,7 @@ export default function OrderDetailsPage() {
             <header className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">
-                        <span className="text-xs font-black text-primary uppercase tracking-[0.3em] bg-primary/10 px-3 py-1 rounded-full border border-primary/20">Manifest #{order.order_id}</span>
+                        <span className="text-xs font-black text-primary uppercase tracking-[0.3em] bg-primary/10 px-3 py-1 rounded-full border border-primary/20">Manifest #{order.order_number || order.order_id}</span>
                     </div>
                     <h1 className="text-5xl font-heading font-black text-text tracking-tight">Order <span className="text-primary italic">Status</span></h1>
                     <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-text-muted">
@@ -214,6 +216,16 @@ export default function OrderDetailsPage() {
                                 <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Payment via</span>
                                 <span className="font-bold text-text uppercase">{order.payment_method.replace('_', ' ')}</span>
                             </div>
+                            {order.paid_at && (
+                                <div className="flex justify-between items-center pt-2">
+                                    <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Paid on</span>
+                                    <span className="font-bold text-text-muted text-[10px]">
+                                        {new Date(order.paid_at).toLocaleString('en-GB', {
+                                            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                        })}
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-8">

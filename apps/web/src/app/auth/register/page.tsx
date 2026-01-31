@@ -27,7 +27,8 @@ export default function RegisterPage() {
         // Validation
         const emailRegex = /^[\w.-]+@[\w.-]+\.\w+$/;
         const passwordMinLen = 8;
-        const phoneRegex = /^\+9725\d{8}$/;
+        // Simple phone validation: accepts 05XXXXXXXX or +97205XXXXXXXX
+        const phoneRegex = /^(\+972|0)?5\d{8}$/;
 
         if (!emailRegex.test(email)) {
             setError('Please enter a valid email address.');
@@ -44,7 +45,7 @@ export default function RegisterPage() {
         if (phone) {
             const cleanPhone = phone.replace(/[\s-]/g, '');
             if (!phoneRegex.test(cleanPhone)) {
-                setError('Phone must be Israel format: +972 5X XXX XXXX');
+                setError('Phone must be Israeli mobile: 05XXXXXXXX or +97205XXXXXXXX');
                 setLoading(false);
                 return;
             }

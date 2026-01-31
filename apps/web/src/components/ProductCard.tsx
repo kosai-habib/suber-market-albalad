@@ -19,7 +19,7 @@ interface Product {
     badge?: string;
 }
 
-export const ProductCard = ({ product }: { product: Product }) => {
+export const ProductCard = ({ product, onQuickView }: { product: Product, onQuickView?: (product: Product) => void }) => {
     const { addToCart } = useCart();
     const [isAdded, setIsAdded] = useState(false);
 
@@ -27,10 +27,18 @@ export const ProductCard = ({ product }: { product: Product }) => {
         ? product.price / (1 - (product.discount_percent || 0) / 100)
         : product.price;
 
-    const handleAddToCart = () => {
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.stopPropagation();
         addToCart(product);
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 2000);
+    };
+
+    const handleQuickView = (e: React.MouseEvent) => {
+        if (onQuickView) {
+            e.preventDefault();
+            onQuickView(product);
+        }
     };
 
     const displayImage = product.image_url || product.category_image;
@@ -43,7 +51,11 @@ export const ProductCard = ({ product }: { product: Product }) => {
             className="group bg-card border border-border shadow-soft rounded-lg p-4 flex flex-col gap-4 relative transition-premium hover:shadow-card hover:-translate-y-1"
         >
             {/* 1:1 Image Container */}
-            <Link href={`/products/${product.id}`} className="relative aspect-square rounded-md overflow-hidden bg-bg block border border-border">
+            <Link
+                href={`/products/${product.id}`}
+                onClick={handleQuickView}
+                className="relative aspect-square rounded-md overflow-hidden bg-bg block border border-border cursor-pointer"
+            >
                 {displayImage ? (
                     <img
                         src={displayImage}
@@ -83,7 +95,7 @@ export const ProductCard = ({ product }: { product: Product }) => {
                     <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">4.0 / 5</span>
                 </div>
 
-                <Link href={`/products/${product.id}`}>
+                <Link href={`/products/${product.id}`} onClick={handleQuickView}>
                     <h4 className="text-sm font-heading font-bold text-text line-clamp-2 min-h-[40px] leading-snug hover:text-primary transition-colors">
                         {product.name}
                     </h4>

@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5001';
+const API_BASE = process.env.NEXT_PUBLIC_BASE_URL || 'http://127.0.0.1:5001';
 
 export function getAuthHeaders(): Record<string, string> {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
@@ -22,7 +22,8 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
 
     const response = await fetch(`${API_BASE}${url}`, {
         ...options,
-        headers
+        headers,
+        mode: 'cors'
     });
 
     return response;

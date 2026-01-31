@@ -98,7 +98,21 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex flex-col gap-3">
                         <h1 className="text-4xl font-heading font-black text-text tracking-tight">Order Placed!</h1>
-                        <p className="text-text-muted font-medium">Your order <span className="text-text font-bold">#{orderData.order_id}</span> is confirmed.</p>
+                        <p className="text-text-muted font-medium">Your order has been successfully confirmed.</p>
+
+                        {/* New Order details display */}
+                        <div className="flex flex-col gap-1 mt-2">
+                            <span className="text-sm font-bold text-text-muted uppercase tracking-wider">
+                                Order ID: <span className="text-text select-all">#{orderData.order_number || orderData.order_id}</span>
+                            </span>
+                            {orderData.paid_at && (
+                                <span className="text-xs font-bold text-text-muted/60 uppercase tracking-widest">
+                                    Paid on: {new Date(orderData.paid_at).toLocaleString('en-GB', {
+                                        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                    })}
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 w-full bg-card p-6 rounded-3xl border border-border">

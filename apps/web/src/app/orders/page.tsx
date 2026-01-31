@@ -24,6 +24,8 @@ import Link from 'next/link';
 
 interface Order {
     order_id: number;
+    order_number?: string;
+    paid_at?: string;
     total_price: number;
     status: string;
     payment_method: string;
@@ -155,14 +157,28 @@ export default function OrdersPage() {
                                         <Package size={28} />
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <h3 className="text-xl font-heading font-black text-text">Order #{order.order_id}</h3>
-                                        <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-text-muted">
-                                            <span className="flex items-center gap-2">
+                                        <h3 className="text-xl font-heading font-black text-text">
+                                            {order.order_number || `Order #${order.order_id}`}
+                                        </h3>
+                                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-xs font-bold uppercase tracking-widest text-text-muted">
+                                            <span className="flex items-center gap-2" title="Created Date">
                                                 <Calendar size={14} />
                                                 {new Date(order.created_at).toLocaleDateString()}
                                             </span>
-                                            <span className="w-1.5 h-1.5 bg-border rounded-full" />
-                                            <span>Verified Transaction</span>
+                                            {order.paid_at ? (
+                                                <>
+                                                    <span className="hidden md:inline w-1.5 h-1.5 bg-border rounded-full" />
+                                                    <span className="flex items-center gap-2 text-success/80" title="Payment Time">
+                                                        <Clock size={14} />
+                                                        {new Date(order.paid_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="hidden md:inline w-1.5 h-1.5 bg-border rounded-full" />
+                                                    <span>Verified Transaction</span>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

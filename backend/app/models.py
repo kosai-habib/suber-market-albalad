@@ -61,6 +61,8 @@ class Order(db.Model):
     __tablename__ = "orders"
 
     id = db.Column(db.Integer, primary_key=True)
+    order_number = db.Column(db.String(32), unique=True, nullable=True) # E.g. ALB-2026-01452
+    paid_at = db.Column(db.DateTime, nullable=True)
 
     user_id = db.Column(
         db.Integer,

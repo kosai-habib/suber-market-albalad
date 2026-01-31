@@ -9,6 +9,10 @@ import { GridSkeleton } from '@/components/LoadingSkeleton';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, PackageSearch, Sparkles, ChevronDown } from 'lucide-react';
 
+import { ProductModal } from '@/components/ProductModal';
+
+// ... imports remain same ...
+
 export const dynamic = 'force-dynamic';
 
 function HomeContent() {
@@ -25,6 +29,9 @@ function HomeContent() {
 
   const [minPrice, setMinPrice] = useState(minPriceParam || '');
   const [maxPrice, setMaxPrice] = useState(maxPriceParam || '');
+
+  // Quick View State
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,12 +79,12 @@ function HomeContent() {
     if (maxPrice) params.set('max_price', maxPrice); else params.delete('max_price');
     router.push(`/?${params.toString()}`);
   };
-
   return (
     <div className="flex flex-col gap-12 pb-20 bg-bg text-text">
-      {/* Hero Banner - Fresh Design */}
-      {/* Hero Banner - Mobile First, Clean, Subtle Motion */}
+
+      {/* ... Hero Banner ... */}
       <section className="bg-[#1B4D3E] dark:bg-[#0c1f1a] pt-12 pb-16 md:py-24 overflow-hidden relative transition-colors duration-500">
+        {/* ... same hero content ... */}
         {/* Abstract Background Element (Subtle) */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 blur-[100px] rounded-full translate-x-1/3 -translate-y-1/3 pointer-events-none" />
 
@@ -122,6 +129,7 @@ function HomeContent() {
 
           {/* Controls Bar */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b border-border">
+            {/* ... same controls ... */}
             <div className="flex flex-col gap-3">
               <h2 className="text-3xl font-heading font-black text-text">Fresh Arrivals</h2>
               <CategoryFilter
@@ -170,7 +178,11 @@ function HomeContent() {
             ) : products.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {products.map((p) => (
-                  <ProductCard key={p.id} product={p} />
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    onQuickView={(prod) => setSelectedProduct(prod)}
+                  />
                 ))}
               </div>
             ) : (
@@ -193,6 +205,13 @@ function HomeContent() {
           </div>
         </div>
       </div>
+
+      {/* Quick View Modal */}
+      <ProductModal
+        product={selectedProduct}
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+      />
     </div>
   );
 }
