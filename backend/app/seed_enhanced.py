@@ -40,7 +40,7 @@ PRODUCTS_DATA = [
         "rating": 4.5,
         "reviews": 48,
         "tags": "fresh,organic,local",
-        "img": "https://images.unsplash.com/photo-1561132044-67d71d9d959b?auto=format&fit=crop&q=80&w=800"
+        "img": "/images/products/tomato.png"
     },
     {
         "name": "Cucumbers",
@@ -74,7 +74,7 @@ PRODUCTS_DATA = [
         "rating": 4.7,
         "reviews": 52,
         "tags": "fresh,sweet,vitamin-c",
-        "img": "https://images.unsplash.com/photo-1563513214150-13ee24f66a21?auto=format&fit=crop&q=80&w=800"
+        "img": "/images/products/red papper.png"
     },
     {
         "name": "Potatoes",
@@ -142,7 +142,7 @@ PRODUCTS_DATA = [
         "rating": 4.1,
         "reviews": 28,
         "tags": "crunchy,healthy",
-        "img": "https://images.unsplash.com/photo-1563636619-e9107da8a7aa?auto=format&fit=crop&q=80&w=800"
+        "img": "/images/products/cabbage.png"
     },
 
     # ========== DAIRY & EGGS ==========

@@ -2,187 +2,319 @@ from app import create_app
 from app.extensions import db
 from app.models import Category, Product
 
-# master mapping for categories with visual concepts
-CATEGORIES_DATA = {
-    "fruits-vegetables": {
-        "name": "Fruits & Vegetables", 
-        "img": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"
-    },
-    "dairy-eggs": {
-        "name": "Dairy & Eggs", 
-        "img": "https://images.unsplash.com/photo-1563636619-e9107da8a7aa?auto=format&fit=crop&q=80&w=800"
-    },
-    "pantry-canned": {
-        "name": "Pantry & Canned Food", 
-        "img": "https://images.unsplash.com/photo-1590779033100-9f60af05a013?auto=format&fit=crop&q=80&w=800"
-    },
-    "bakery-bread": {
-        "name": "Bakery & Bread", 
-        "img": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800"
-    },
-    "meat-poultry": {
-        "name": "Meat & Poultry", 
-        "img": "https://images.unsplash.com/photo-1588168333986-507efd3ae3e5?auto=format&fit=crop&q=80&w=800"
-    },
-    "household-cleaning": {
-        "name": "Household & Cleaning", 
-        "img": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=800"
-    },
-    "beverages": {
-        "name": "Beverages", 
-        "img": "https://images.unsplash.com/photo-1559839914-17aae19cea0e?auto=format&fit=crop&q=80&w=800"
-    },
-    "snacks-sweets": {
-        "name": "Snacks & Sweets", 
-        "img": "https://images.unsplash.com/photo-1549007994-cb92caebd54b?auto=format&fit=crop&q=80&w=800"
-    },
-    "ready-to-eat-foods": {
-        "name": "Ready to Eat Foods", 
-        "img": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800"
-    },
-    "body-face-care": {
-        "name": "Body & Face Care", 
-        "img": "https://images.unsplash.com/photo-1556228515-919530a0867a?auto=format&fit=crop&q=80&w=800"
-    },
-    "deli-salads-cold-cuts": {
-        "name": "Deli, Salads & Cold Cuts", 
-        "img": "https://images.unsplash.com/photo-1540914129282-629bb4b29e3a?auto=format&fit=crop&q=80&w=800"
-    },
-    "plant-based-products": {
-        "name": "Plant-Based Products", 
-        "img": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800"
-    },
-    "dairy-substitutes": {
-        "name": "Dairy Substitutes", 
-        "img": "https://images.unsplash.com/photo-1550583724-1d55d04adcb1?auto=format&fit=crop&q=80&w=800"
-    },
-    "ice-cream": {
-        "name": "Ice Cream", 
-        "img": "https://images.unsplash.com/photo-1501443762214-6f05bb541fb7?auto=format&fit=crop&q=80&w=800"
-    }
+CATEGORIES_MAP = {
+    "fruits-vegetables": {"name": "Fruits & Vegetables", "name_ar": "فواكه وخضروات"},
+    "dairy-eggs": {"name": "Dairy & Eggs", "name_ar": "ألبان وبيض"},
+    "pantry-canned": {"name": "Pantry & Canned Food", "name_ar": "مخزن ومعلبات"},
+    "bakery-bread": {"name": "Bakery & Bread", "name_ar": "مخبز وخبز"},
+    "meat-poultry": {"name": "Meat & Poultry", "name_ar": "لحوم ودواجن"},
+    "household-cleaning": {"name": "Household & Cleaning", "name_ar": "منظفات ومنزل"},
+    "beverages": {"name": "Beverages", "name_ar": "مشروبات"},
+    "snacks-sweets": {"name": "Snacks & Sweets", "name_ar": "وجبات خفيفة وحلويات"},
+    "ready-to-eat-foods": {"name": "Ready to Eat Foods", "name_ar": "أطعمة جاهزة"},
+    "frozen-foods": {"name": "Frozen Foods", "name_ar": "مجمدات"},
 }
 
-PRODUCTS_LIST = [
-    # Fruits & Vegetables (16+)
-    {"name": "Organic Red Apples", "cat": "fruits-vegetables", "price": 12.00, "unit": "per kg", "badge": "1kg", "img": "https://images.unsplash.com/photo-1560806887-1e4cd0b6bccb"},
-    {"name": "Fresh Bananas", "cat": "fruits-vegetables", "price": 6.50, "unit": "per bunch", "badge": "", "img": "https://images.unsplash.com/photo-1603833665858-e61d17a86224"},
-    {"name": "Hass Avocado (Pre-ripened)", "cat": "fruits-vegetables", "price": 8.00, "unit": "per unit", "badge": "Premium", "img": "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578"},
-    {"name": "Baby Spinach (Washed)", "cat": "fruits-vegetables", "price": 11.00, "unit": "200g bag", "badge": "Organic", "img": "https://images.unsplash.com/photo-1576045057995-568f588f82fb"},
-    {"name": "Vine-Ripened Cherry Tomatoes", "cat": "fruits-vegetables", "price": 6.90, "unit": "per 500g", "badge": "Local", "img": "https://images.unsplash.com/photo-1561132044-67d71d9d959b"},
-    {"name": "Fresh Lemon", "cat": "fruits-vegetables", "price": 1.50, "unit": "per unit", "badge": "Fresh", "img": "https://images.unsplash.com/photo-1590502593747-42a996133562"},
-    {"name": "English Cucumbers", "cat": "fruits-vegetables", "price": 4.50, "unit": "per 1kg", "badge": "Crunchy", "img": "https://images.unsplash.com/photo-1449300079323-02e209d9d02d"},
-    {"name": "White Table Onions", "cat": "fruits-vegetables", "price": 3.40, "unit": "per 1kg", "badge": "Essential", "img": "https://images.unsplash.com/photo-1508747703725-719777637510"},
-    {"name": "Sweet Red Potatoes", "cat": "fruits-vegetables", "price": 4.20, "unit": "per 1kg", "badge": "1kg", "img": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d"},
-    {"name": "Fresh Broccoli Head", "cat": "fruits-vegetables", "price": 9.50, "unit": "per unit", "badge": "Vitamin C", "img": "https://images.unsplash.com/photo-1452948491233-ad8a1ed01085"},
-    {"name": "Crunchy Carrots", "cat": "fruits-vegetables", "price": 3.90, "unit": "per 1kg", "badge": "Sweet", "img": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37"},
-    {"name": "Garden Parsley", "cat": "fruits-vegetables", "price": 3.90, "unit": "per bunch", "badge": "Local", "img": "https://images.unsplash.com/photo-1542838132-92c53300491e"},
-    {"name": "Blueberry Box (Imported)", "cat": "fruits-vegetables", "price": 18.00, "unit": "125g pack", "badge": "Superfood", "img": "https://images.unsplash.com/photo-1498557850523-fd3d118b962e"},
-    {"name": "Honeydew Strawberry", "cat": "fruits-vegetables", "price": 15.00, "unit": "250g pack", "badge": "Seasonal", "img": "https://images.unsplash.com/photo-1464960726346-64bc42632420"},
-    {"name": "Fresh Garlic Bulbs", "cat": "fruits-vegetables", "price": 5.00, "unit": "3pk", "badge": "Flavor", "img": "https://images.unsplash.com/photo-1540148426945-6cf22a6b2383"},
-    {"name": "Iceberg Lettuce", "cat": "fruits-vegetables", "price": 5.20, "unit": "per unit", "badge": "", "img": "https://images.unsplash.com/photo-1622206141842-8395f1fa684d"},
+PRODUCTS_DATA = [
+    # FRUITS & VEGETABLES
+    {
+        "name": "Fresh Tomatoes",
+        "name_ar": "طماطم طازجة",
+        "price": 3.50,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Fresh, ripe tomatoes perfect for salads and cooking.",
+        "stock": 150,
+        "img": "/images/products/tomato.png"
+    },
+    {
+        "name": "Fresh Apples",
+        "name_ar": "تفاح طازج",
+        "price": 8.90,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Crisp and sweet apples, perfect for snacking.",
+        "stock": 200,
+        "img": "/images/products/apple.png"
+    },
+    {
+        "name": "Bananas",
+        "name_ar": "موز",
+        "price": 6.50,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Fresh bananas, rich in potassium.",
+        "stock": 180,
+        "img": "/images/products/banana.png"
+    },
+    {
+        "name": "Green Grapes",
+        "name_ar": "عنب أخضر",
+        "price": 12.90,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Sweet seedless green grapes.",
+        "stock": 100,
+        "img": "/images/products/green grapes.png"
+    },
+    {
+        "name": "Blue Grapes",
+        "name_ar": "عنب أزرق",
+        "price": 14.90,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Sweet blue grapes, rich in antioxidants.",
+        "stock": 90,
+        "img": "/images/products/blue grapes.png"
+    },
+    {
+        "name": "Watermelon",
+        "name_ar": "بطيخ",
+        "price": 4.50,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Refreshing watermelon, perfect for summer.",
+        "stock": 50,
+        "img": "/images/products/watermelon.png"
+    },
+    {
+        "name": "Strawberries",
+        "name_ar": "فراولة",
+        "price": 15.90,
+        "cat": "fruits-vegetables",
+        "unit": "per 500g",
+        "description": "Fresh sweet strawberries.",
+        "stock": 80,
+        "img": "/images/products/strawberry.png"
+    },
+    {
+        "name": "Oranges",
+        "name_ar": "برتقال",
+        "price": 7.50,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Juicy oranges, high in vitamin C.",
+        "stock": 150,
+        "img": "/images/products/orange.png"
+    },
+    {
+        "name": "Lichi (Lychee)",
+        "name_ar": "ليتشي",
+        "price": 25.90,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Exotic lychee fruit, sweet and aromatic.",
+        "stock": 40,
+        "img": "/images/products/lichi.png"
+    },
+    {
+        "name": "Red Bell Peppers",
+        "name_ar": "فلفل رومي أحمر",
+        "price": 6.90,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Sweet red bell peppers, rich in vitamin C.",
+        "stock": 80,
+        "img": "/images/products/red papper.png"
+    },
+    {
+        "name": "Green Capsicum",
+        "name_ar": "فليفلة خضراء",
+        "price": 5.50,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Fresh green capsicum for cooking.",
+        "stock": 100,
+        "img": "/images/products/capsicum.png"
+    },
+    {
+        "name": "Carrots",
+        "name_ar": "جزر",
+        "price": 3.90,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Fresh carrots, rich in beta-carotene.",
+        "stock": 150,
+        "img": "/images/products/carrot.png"
+    },
+    {
+        "name": "Broccoli",
+        "name_ar": "بروكلي",
+        "price": 8.50,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Fresh broccoli, packed with nutrients.",
+        "stock": 70,
+        "img": "/images/products/broccoli.png"
+    },
+    {
+        "name": "Cauliflower",
+        "name_ar": "قرنبيط",
+        "price": 7.90,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Fresh cauliflower, versatile vegetable.",
+        "stock": 80,
+        "img": "/images/products/cauliflower.png"
+    },
+    {
+        "name": "White Cabbage",
+        "name_ar": "ملفوف أبيض",
+        "price": 3.90,
+        "cat": "fruits-vegetables",
+        "unit": "per kg",
+        "description": "Crispy white cabbage for salads.",
+        "stock": 90,
+        "img": "/images/products/cabbage.png"
+    },
 
-    # Dairy & Eggs
-    {"name": "Organic Large Eggs", "cat": "dairy-eggs", "price": 5.99, "unit": "per dozen", "badge": "12 pcs", "img": "https://images.unsplash.com/photo-1582722872445-44c56bb6274a"},
-    {"name": "Full Cream Milk", "cat": "dairy-eggs", "price": 6.50, "unit": "1L Carton", "badge": "Essential", "img": "https://images.unsplash.com/photo-1563636619-e9107da8a7aa"},
-    {"name": "Greek Style Yogurt (Plain)", "cat": "dairy-eggs", "price": 14.50, "unit": "500g", "badge": "10% Fat", "img": "https://images.unsplash.com/photo-1488477181946-6428a0291777"},
-    {"name": "Traditional White Labneh", "cat": "dairy-eggs", "price": 12.00, "unit": "400g", "badge": "Local", "img": "https://images.unsplash.com/photo-1635436338433-89747d0ca0ef"},
-    {"name": "Salted Butter Block", "cat": "dairy-eggs", "price": 12.50, "unit": "200g", "badge": "Classic", "img": "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d"},
-    {"name": "Sharp Cheddar Cheese", "cat": "dairy-eggs", "price": 22.00, "unit": "250g", "badge": "Aged", "img": "https://images.unsplash.com/photo-1618164435735-413d3b066c9a"},
-    {"name": "Mozzarella Shreds", "cat": "dairy-eggs", "price": 18.00, "unit": "200g", "badge": "", "img": "https://images.unsplash.com/photo-1552767059-ce182ead6c1b"},
-    {"name": "Soft Cream Cheese", "cat": "dairy-eggs", "price": 13.50, "unit": "200g", "badge": "Spread", "img": "https://images.unsplash.com/photo-1552767059-ce182ead6c1b"},
-    {"name": "Low Fat Milk (1%)", "cat": "dairy-eggs", "price": 6.50, "unit": "1L Carton", "badge": "Light", "img": "https://images.unsplash.com/photo-1550583724-1d55d04adcb1"},
-    {"name": "Natural Drinking Yogurt", "cat": "dairy-eggs", "price": 5.50, "unit": "330ml", "badge": "On-the-go", "img": "https://images.unsplash.com/photo-1488477181946-6428a0291777"},
+    # MEAT & POULTRY
+    {
+        "name": "Fresh Chicken",
+        "name_ar": "دجاج طازج",
+        "price": 28.90,
+        "cat": "meat-poultry",
+        "unit": "per kg",
+        "description": "Fresh whole chicken, perfect for roasting.",
+        "stock": 60,
+        "img": "/images/products/chicken.png"
+    },
+    {
+        "name": "Chicken Leg Pieces",
+        "name_ar": "قطع أفخاذ دجاج",
+        "price": 32.90,
+        "cat": "meat-poultry",
+        "unit": "per kg",
+        "description": "Fresh chicken leg pieces, juicy and tender.",
+        "stock": 70,
+        "img": "/images/products/chicken leg pieces.png"
+    },
+    {
+        "name": "Beef Steak",
+        "name_ar": "ستيك لحم بقري",
+        "price": 55.90,
+        "cat": "meat-poultry",
+        "unit": "per kg",
+        "description": "Premium beef steak, perfect for grilling.",
+        "stock": 40,
+        "img": "/images/products/beaf steak.png"
+    },
+    {
+        "name": "Salmon Fish",
+        "name_ar": "سمك سلمون",
+        "price": 68.90,
+        "cat": "meat-poultry",
+        "unit": "per kg",
+        "description": "Fresh salmon, rich in omega-3.",
+        "stock": 30,
+        "img": "/images/products/salmon fish.png"
+    },
+    {
+        "name": "Oily Fish",
+        "name_ar": "سمك زيتي",
+        "price": 42.90,
+        "cat": "meat-poultry",
+        "unit": "per kg",
+        "description": "Fresh oily fish, healthy and nutritious.",
+        "stock": 50,
+        "img": "/images/products/oily fishes.png"
+    },
 
-    # Pantry & Canned Food
-    {"name": "Premium Basmati Rice", "cat": "pantry-canned", "price": 15.00, "unit": "1kg", "badge": "Long Grain", "img": "https://images.unsplash.com/photo-1586201375761-83865001e31c"},
-    {"name": "Artisan Spaghetti Pasta", "cat": "pantry-canned", "price": 5.50, "unit": "500g", "badge": "Durum Wheat", "img": "https://images.unsplash.com/photo-1551462147-3a88588d4a3f"},
-    {"name": "Extra Virgin Olive Oil", "cat": "pantry-canned", "price": 32.00, "unit": "500ml", "badge": "Cold Pressed", "img": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5"},
-    {"name": "Solid Light Tuna in Oil", "cat": "pantry-canned", "price": 7.50, "unit": "160g", "badge": "Premium", "img": "https://images.unsplash.com/photo-1627429184511-1379374092b7"},
-    {"name": "Concentrated Tomato Paste", "cat": "pantry-canned", "price": 3.80, "unit": "400g", "badge": "100% Natural", "img": "https://images.unsplash.com/photo-1590779033100-9f60af05a013"},
-    {"name": "Organic Red Lentils", "cat": "pantry-canned", "price": 8.50, "unit": "1kg", "badge": "High Protein", "img": "https://images.unsplash.com/photo-1521997017042-4f3df7a76c8c"},
-    {"name": "Canned Garbanzo Beans", "cat": "pantry-canned", "price": 4.50, "unit": "400g", "badge": "Pantry Staple", "img": "https://images.unsplash.com/photo-1547514701-42782101795e"},
-    {"name": "Classic Tomato Sauce", "cat": "pantry-canned", "price": 8.00, "unit": "500g", "badge": "Base", "img": "https://images.unsplash.com/photo-1590779033100-9f60af05a013"},
-
-    # Bakery & Bread
-    {"name": "Traditional Arabic Pita", "cat": "bakery-bread", "price": 4.50, "unit": "5pk", "badge": "Stone Baked", "img": "https://images.unsplash.com/photo-1586444248902-2f64eddf13cf"},
-    {"name": "Artisan Sourdough Loaf", "cat": "bakery-bread", "price": 12.00, "unit": "per unit", "badge": "Freshly Baked", "img": "https://images.unsplash.com/photo-1585478259715-876a6a81bce8"},
-    {"name": "French Baguette (Classic)", "cat": "bakery-bread", "price": 5.00, "unit": "per unit", "badge": "Crunchy", "img": "https://images.unsplash.com/photo-1586444248902-2f64eddf13cf"},
-    {"name": "Buttery Croissant", "cat": "bakery-bread", "price": 4.50, "unit": "per unit", "badge": "French Style", "img": "https://images.unsplash.com/photo-1555507036-ab1f4038808a"},
-    {"name": "Soft Whole Wheat Bread", "cat": "bakery-bread", "price": 8.00, "unit": "750g", "badge": "High Fiber", "img": "https://images.unsplash.com/photo-1509440159596-0249088772ff"},
-    {"name": "Brioche Burger Buns", "cat": "bakery-bread", "price": 9.00, "unit": "4pk", "badge": "Soft", "img": "https://images.unsplash.com/photo-1585145062885-472ba218633b"},
-
-    # Meat & Poultry
-    {"name": "Premium Chicken Breast", "cat": "meat-poultry", "price": 38.00, "unit": "1kg pack", "badge": "Local", "img": "https://images.unsplash.com/photo-1627440221370-98565b93226a"},
-    {"name": "Lean Ground Beef", "cat": "meat-poultry", "price": 45.00, "unit": "1kg pack", "badge": "Premium", "img": "https://images.unsplash.com/photo-1588168333986-507efd3ae3e5"},
-    {"name": "Prime Ribeye Steak", "cat": "meat-poultry", "price": 120.00, "unit": "per kg", "badge": "Marble Grade", "img": "https://images.unsplash.com/photo-1603048588665-791ca8aea617"},
-    {"name": "Fresh Whole Chicken", "cat": "meat-poultry", "price": 28.00, "unit": "per unit", "badge": "Family size", "img": "https://images.unsplash.com/photo-1587593810167-a84920ea0781"},
-    {"name": "Gourmet Beef Patties", "cat": "meat-poultry", "price": 35.00, "unit": "4pk", "badge": "Grill Ready", "img": "https://images.unsplash.com/photo-1594212699903-ec8a3ecc50f6"},
-
-    # Beverages
-    {"name": "Mineral Water (Still)", "cat": "beverages", "price": 2.50, "unit": "1.5L", "badge": "Pure", "img": "https://images.unsplash.com/photo-1559839914-17aae19cea0e"},
-    {"name": "Sparkling Mineral Water", "cat": "beverages", "price": 5.00, "unit": "750ml", "badge": "Refreshing", "img": "https://images.unsplash.com/photo-1559839914-17aae19cea0e"},
-    {"name": "Classic Cola Soda", "cat": "beverages", "price": 6.50, "unit": "1.5L", "badge": "", "img": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97"},
-    {"name": "Energy Drink (Red)", "cat": "beverages", "price": 8.00, "unit": "250ml", "badge": "Taurine", "img": "https://images.unsplash.com/photo-1622543953491-f07a3bc3d997"},
-
-    # Snacks & Sweets
-    {"name": "Sea Salt Potato Chips", "cat": "snacks-sweets", "price": 6.50, "unit": "100g", "badge": "Extra Crispy", "img": "https://images.unsplash.com/photo-1566478431375-707a62544e53"},
-    {"name": "Large Medjool Dates", "cat": "snacks-sweets", "price": 35.00, "unit": "1kg box", "badge": "Natural", "img": "https://images.unsplash.com/photo-1541011384039-16e7884d32e9"},
-    {"name": "Swiss Milk Chocolate", "cat": "snacks-sweets", "price": 4.50, "unit": "100g bar", "badge": "Smooth", "img": "https://images.unsplash.com/photo-1549007994-cb92caebd54b"},
-    {"name": "Mixed Roasted Nuts", "cat": "snacks-sweets", "price": 22.00, "unit": "250g bag", "badge": "No Salt", "img": "https://images.unsplash.com/photo-1508061253366-f7da158b6d46"},
-    
-    # Ready to Eat Foods
-    {"name": "Beef Nuggets (Israel)", "cat": "ready-to-eat-foods", "price": 35.90, "unit": "600g", "badge": "Crispy", "img": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"},
-    {"name": "Frozen Potato Blintzes", "cat": "ready-to-eat-foods", "price": 3.86, "unit": "per 100g", "badge": "Homemade", "img": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"}
+    # OTHER CATEGORIES
+    {
+        "name": "Fresh Milk",
+        "name_ar": "حليب طازج",
+        "price": 4.50,
+        "cat": "dairy-eggs",
+        "unit": "1L",
+        "description": "Full fat fresh milk, pasteurized.",
+        "stock": 200,
+        "img": "https://images.unsplash.com/photo-1563636619-e9107da8a7aa?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+        "name": "White Bread",
+        "name_ar": "خبز أبيض",
+        "price": 4.50,
+        "cat": "bakery-bread",
+        "unit": "per loaf",
+        "description": "Fresh soft white bread.",
+        "stock": 180,
+        "img": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+        "name": "Mineral Water",
+        "name_ar": "ماء معدني",
+        "price": 3.50,
+        "cat": "beverages",
+        "unit": "1.5L",
+        "description": "Pure mineral water.",
+        "stock": 300,
+        "img": "https://images.unsplash.com/photo-1559839914-17aae19cea0e?auto=format&fit=crop&q=80&w=800"
+    },
 ]
 
-def clear_db():
-    print("Clearing database...")
-    Product.query.delete()
-    Category.query.delete()
+
+def clear_data():
+    print("🗑️  Clearing existing data...")
+    try:
+        Product.query.delete()
+        Category.query.delete()
+        db.session.commit()
+        print("✅ Data cleared!")
+    except Exception as e:
+        print(f"⚠️  No existing data to clear (tables may not exist yet): {e}")
+
+
+def seed_categories():
+    print("\n📁 Seeding categories...")
+    cat_id_map = {}
+    
+    for slug, cat_data in CATEGORIES_MAP.items():
+        cat = Category(slug=slug, name=cat_data["name"])
+        db.session.add(cat)
+        db.session.flush()
+        cat_id_map[slug] = cat.id
+        print(f"  ✅ {cat_data['name']}")
+    
+    db.session.commit()
+    return cat_id_map
+
+
+def seed_products(cat_id_map):
+    print("\n📦 Seeding products...")
+    
+    for p_data in PRODUCTS_DATA:
+        product = Product(
+            name=p_data["name"],
+            price=p_data["price"],
+            image_url=p_data["img"],
+            category_id=cat_id_map[p_data["cat"]],
+            unit=p_data.get("unit"),
+            badge=p_data.get("badge")
+        )
+        db.session.add(product)
+        print(f"  ✅ {p_data['name']}")
+    
     db.session.commit()
 
-def seed_master():
-    print("Seeding master categories...")
-    cat_map = {}
-    for slug, data in CATEGORIES_DATA.items():
-        cat = Category.query.filter_by(slug=slug).first()
-        if not cat:
-            cat = Category(slug=slug, name=data["name"], image_url=data["img"])
-            db.session.add(cat)
-            db.session.commit()
-        else:
-            cat.name = data["name"]
-            cat.image_url = data["img"]
-            db.session.add(cat)
-        cat_map[slug] = cat.id
-    db.session.commit()
 
-    print("Seeding master products...")
-    for p_data in PRODUCTS_LIST:
-        existing = Product.query.filter_by(name=p_data["name"]).first()
-        if not existing:
-            p = Product(
-                name=p_data["name"],
-                price=p_data["price"],
-                image_url=p_data["img"],
-                category_id=cat_map[p_data["cat"]],
-                unit=p_data.get("unit"),
-                badge=p_data.get("badge")
-            )
-            db.session.add(p)
-        else:
-            existing.price = p_data["price"]
-            existing.image_url = p_data["img"]
-            existing.unit = p_data.get("unit")
-            existing.badge = p_data.get("badge")
-            db.session.add(existing)
+def seed_data():
+    print("=" * 80)
+    print("🌱 STARTING DATABASE SEED")
+    print("=" * 80)
+    
+    clear_data()
+    cat_id_map = seed_categories()
+    seed_products(cat_id_map)
+    
+    print("\n" + "=" * 80)
+    print("✅ SEED COMPLETED SUCCESSFULLY!")
+    print(f"📊 Total Categories: {len(CATEGORIES_MAP)}")
+    print(f"📦 Total Products: {len(PRODUCTS_DATA)}")
+    print("=" * 80)
 
-    db.session.commit()
-    print("Database seeding completed successfully.")
 
 if __name__ == "__main__":
     app = create_app()
     with app.app_context():
-        # Using clear_db for a fresh start with clean names
-        clear_db()
-        seed_master()
+        seed_data()
