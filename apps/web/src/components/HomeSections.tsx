@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, ShoppingBag } from 'lucide-react';
-import { useStore } from '../context/StoreContext';
+// Legacy component - imports removed
 
 
 export const CategoryGrid = ({ activeCategory, setCategory }) => {

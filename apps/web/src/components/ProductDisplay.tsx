@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { ShoppingCart, Star, Plus } from 'lucide-react';
-import { useStore } from '@/context/StoreContext';
+// Legacy component - imports removed
 import { motion } from 'framer-motion';
 import { useEffect } from 'react';
 import { apiFetch } from '../lib/apiClient';

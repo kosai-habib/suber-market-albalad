@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { Filter, SortAsc, Tag } from 'lucide-react';
-import { useStore } from '@/context/StoreContext';
+// Legacy component - imports removed
 
 const Sidebar = ({ className, products = [], activeCategory, setCategory, activeSort, setSort, showDeals, setShowDeals }) => {
     const { categories } = useStore();

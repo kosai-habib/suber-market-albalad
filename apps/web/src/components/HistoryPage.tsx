@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { useStore } from '@/context/StoreContext';
+// Legacy component - imports removed
 import { CheckCircle, Package } from 'lucide-react';
 
 const HistoryPage = () => {

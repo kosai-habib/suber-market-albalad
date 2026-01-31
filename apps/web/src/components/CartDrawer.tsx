@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
-import { useStore } from '@/context/StoreContext';
+// Legacy component - imports removed
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CartDrawer = () => {

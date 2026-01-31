@@ -1,18 +1,23 @@
 "use client";
 import React, { useState } from 'react';
 import { X, Mail, Lock, User as UserIcon } from 'lucide-react';
-import { useStore } from '@/context/StoreContext';
+import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiFetch } from '../lib/apiClient';
 
-const AuthModal = () => {
-    const { isAuthModalOpen, setIsAuthModalOpen, login } = useStore();
+interface AuthModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+    const { login } = useAuth();
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.password.length < 6) {
             setError('Password must be at least 6 characters');
@@ -43,11 +48,8 @@ const AuthModal = () => {
                 localStorage.setItem('user_id', data.user.id);
                 window.dispatchEvent(new Event('auth-changed'));
 
-                login({
-                    name: formData.name || formData.email.split('@')[0],
-                    email: formData.email,
-                    token: data.access_token
-                });
+                login(data.access_token, data.refresh_token || '', data.user);
+                onClose();
             } else {
                 // Register
                 const regRes = await apiFetch('/api/auth/register', {
@@ -79,14 +81,11 @@ const AuthModal = () => {
                 localStorage.setItem('user_id', data.user.id);
                 window.dispatchEvent(new Event('auth-changed'));
 
-                login({
-                    name: formData.name || formData.email.split('@')[0],
-                    email: formData.email,
-                    token: data.access_token
-                });
+                login(data.access_token, data.refresh_token || '', data.user);
+                onClose();
             }
-        } catch (err) {
-            setError(err.message || 'Network error. Please try again.');
+        } catch (err: any) {
+            setError(err?.message || 'Network error');
         } finally {
             setLoading(false);
         }
@@ -94,13 +93,13 @@ const AuthModal = () => {
 
     return (
         <AnimatePresence>
-            {isAuthModalOpen && (
+            {isOpen && (
                 <>
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={() => setIsAuthModalOpen(false)}
+                        onClick={onClose}
                         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200]"
                     />
                     <motion.div
@@ -110,7 +109,7 @@ const AuthModal = () => {
                         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white p-2xl rounded-xl shadow-2xl z-[201] flex flex-col gap-xl"
                     >
                         <button
-                            onClick={() => setIsAuthModalOpen(false)}
+                            onClick={onClose}
                             className="absolute top-md right-md text-text-muted p-sm hover:text-text-dark"
                             aria-label="Close modal"
                         >

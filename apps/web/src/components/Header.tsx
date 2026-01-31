@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { ShoppingCart, Search, User, LogOut } from 'lucide-react';
-import { useStore } from '@/context/StoreContext';
+// Legacy component - imports removed
 
 const Header = ({ className }) => {
     const { cart, setIsCartOpen, user, logout, setIsAuthModalOpen, searchQuery, setSearchQuery } = useStore();

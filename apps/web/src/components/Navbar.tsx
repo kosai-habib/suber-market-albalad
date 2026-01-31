@@ -7,7 +7,7 @@ import { ShoppingCart, User, Search, Store, LogOut, Package, Menu, Moon, Sun } f
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
-import { AuthModal } from './AuthModal';
+import AuthModal from './AuthModal';
 
 export const Navbar = () => {
     const { cart } = useCart();
@@ -143,3 +143,5 @@ export const Navbar = () => {
         </nav>
     );
 };
+
+export default Navbar;
