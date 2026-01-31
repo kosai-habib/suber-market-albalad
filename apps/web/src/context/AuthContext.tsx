@@ -37,8 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(data);
             localStorage.setItem('user', JSON.stringify(data));
         } catch (err: any) {
-            console.error('Failed to fetch profile', err);
-            // If network error or 401, clear invalid token
+            // Silently handle auth failures (expected when not logged in)
             if (err.name === 'TypeError' || err.status === 401) {
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');

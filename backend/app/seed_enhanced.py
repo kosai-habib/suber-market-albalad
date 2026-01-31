@@ -472,10 +472,14 @@ PRODUCTS_DATA = [
 def clear_data():
     """مسح جميع البيانات من قاعدة البيانات"""
     print("🗑️  Clearing existing data...")
-    Product.query.delete()
-    Category.query.delete()
-    db.session.commit()
-    print("✅ Data cleared!")
+    try:
+        Product.query.delete()
+        Category.query.delete()
+        db.session.commit()
+        print("✅ Data cleared!")
+    except Exception as e:
+        db.session.rollback()
+        print(f"⚠️  No existing data to clear: {str(e)[:100]}")
 
 
 def seed_categories():
