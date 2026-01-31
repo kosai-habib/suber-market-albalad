@@ -3,15 +3,13 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/apiClient';
+import { buildQueryString } from '@/lib/utils/query';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryFilter } from '@/components/CategoryFilter';
 import { GridSkeleton } from '@/components/LoadingSkeleton';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, PackageSearch, Sparkles, ChevronDown } from 'lucide-react';
-
 import { ProductModal } from '@/components/ProductModal';
-
-// ... imports remain same ...
 
 export const dynamic = 'force-dynamic';
 
@@ -38,16 +36,8 @@ function HomeContent() {
       try {
         setLoading(true);
 
-        const buildQuery = (params: any) => {
-          const s = new URLSearchParams();
-          Object.entries(params).forEach(([k, v]) => {
-            if (v) s.append(k, v.toString());
-          });
-          return s.toString() ? `?${s.toString()}` : '';
-        };
-
         const [prodRes, catRes] = await Promise.all([
-          apiFetch(`/api/products${buildQuery({
+          apiFetch(`/api/products${buildQueryString({
             q: query,
             category: catParam,
             min_price: minPriceParam,
@@ -64,7 +54,7 @@ function HomeContent() {
         setProducts(Array.isArray(prodData) ? prodData : (prodData.items || []));
         setCategories(Array.isArray(catData) ? catData : (catData.items || []));
       } catch (err) {
-        console.error(err);
+
       } finally {
         setLoading(false);
       }
