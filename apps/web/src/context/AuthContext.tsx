@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiFetch } from '@/lib/apiClient';
+import { authApi } from '@/lib/api';
 
 interface User {
     id: number;
@@ -25,24 +25,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [loading, setLoading] = useState(true);
 
     const refreshProfile = async () => {
-        const token = localStorage.getItem('access_token');
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
         if (!token) {
             setLoading(false);
             return;
         }
         try {
-            const res = await apiFetch('/api/auth/me');
-            if (!res.ok) throw new Error('Failed to fetch profile');
-            const data = await res.json();
-            setUser(data);
-            localStorage.setItem('user', JSON.stringify(data));
+            const res = await authApi.getProfile();
+            setUser(res.data);
+            localStorage.setItem('user', JSON.stringify(res.data));
         } catch (err: any) {
-            // Silently handle auth failures (expected when not logged in)
-            if (err.name === 'TypeError' || err.status === 401) {
+            if (err.response?.status === 401) {
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
                 localStorage.removeItem('user');
-                localStorage.removeItem('user_id');
                 setUser(null);
             }
         } finally {
@@ -51,7 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     useEffect(() => {
-        const token = localStorage.getItem('access_token');
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
         if (token) {
             refreshProfile();
         } else {
@@ -62,10 +58,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const login = (accessToken: string, refreshToken: string, userData: User) => {
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', refreshToken);
-        localStorage.setItem('user_id', userData.id.toString());
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
-        window.dispatchEvent(new Event('auth-changed'));
     };
 
     const logout = () => {

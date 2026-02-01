@@ -1,37 +1,48 @@
-const API_BASE = process.env.NEXT_PUBLIC_BASE_URL || 'http://127.0.0.1:5001';
+import axios from 'axios';
 
-export function getAuthHeaders(): Record<string, string> {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-
-    const headers: Record<string, string> = {
+const apiClient = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001',
+    withCredentials: true,
+    headers: {
         'Content-Type': 'application/json',
-    };
+    },
+});
 
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+// Request interceptor for JWT
+apiClient.interceptors.request.use(
+    (config) => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+// Response interceptor for handling auth errors globally
+apiClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response?.status === 401) {
+            // Handle token expiration or invalidity
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                // Optional: window.location.href = '/auth/login';
+            }
+        }
+        return Promise.reject(error);
     }
+);
 
-    return headers;
-}
+export default apiClient;
 
-export async function apiFetch(url: string, options: RequestInit = {}) {
-    const headers = {
-        ...getAuthHeaders(),
-        ...(options.headers as Record<string, string> || {})
-    };
-
-    const response = await fetch(`${API_BASE}${url}`, {
-        ...options,
-        headers,
-        mode: 'cors'
-    });
-
-    return response;
-}
-
+// Helper to protect routes
 export function requireAuth(navigate: (path: string) => void) {
     if (typeof window !== 'undefined' && !localStorage.getItem('access_token')) {
         navigate('/auth/login');
-        throw new Error('Not authenticated');
+        return false;
     }
+    return true;
 }

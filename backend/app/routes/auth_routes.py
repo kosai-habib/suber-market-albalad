@@ -8,7 +8,7 @@ from flask_jwt_extended import (
 )
 from app.extensions import db, limiter
 from app.models import User
-from app.utils.serializers import user_to_dict
+from app.schemas.user_schema import user_to_dict
 
 auth_bp = Blueprint("auth", __name__)
 

@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/apiClient';
+import { productsApi } from '@/lib/api';
 import { useCart } from '@/context/CartContext';
 import { motion } from 'framer-motion';
 import { ShoppingCart, ArrowLeft, Star, ShieldCheck, Truck, RefreshCcw, Loader2, CheckCircle } from 'lucide-react';
@@ -20,15 +20,13 @@ export default function ProductDetailsPage() {
 
     useEffect(() => {
         const fetchProduct = async () => {
+            if (!id) return;
             try {
                 setLoading(true);
-                const res = await apiFetch(`/api/products/${id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setProduct(data);
-                }
+                const res = await productsApi.getById(Number(id));
+                setProduct(res.data);
             } catch (err) {
-                console.error(err);
+                console.error('Product fetch error:', err);
             } finally {
                 setLoading(false);
             }
@@ -37,9 +35,11 @@ export default function ProductDetailsPage() {
     }, [id]);
 
     const handleAddToCart = () => {
-        for (let i = 0; i < quantity; i++) addToCart(product);
-        setIsAdded(true);
-        setTimeout(() => setIsAdded(false), 2000);
+        if (product) {
+            addToCart(product, quantity);
+            setIsAdded(true);
+            setTimeout(() => setIsAdded(false), 2000);
+        }
     };
 
     if (loading) {

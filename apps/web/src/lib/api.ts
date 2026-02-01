@@ -1,57 +1,42 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+/**
+ * Endpoints are now centralized in this file.
+ * UI components should use these helper functions instead of calling axios directly.
+ */
 
-export const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+// Auth Endpoints
+export const authApi = {
+    login: (credentials: any) => apiClient.post('/api/auth/login', credentials),
+    register: (userData: any) => apiClient.post('/api/auth/register', userData),
+    getProfile: () => apiClient.get('/api/auth/me'),
+    refresh: (refreshToken: string) => apiClient.post('/api/auth/refresh', {}, {
+        headers: { Authorization: `Bearer ${refreshToken}` }
+    })
+};
 
-// Request Interceptor for JWT
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('access_token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+// Product & Category Endpoints
+export const productsApi = {
+    getAll: (queryString: string = '') => apiClient.get(`/api/products${queryString}`),
+    getById: (id: number) => apiClient.get(`/api/products/${id}`),
+    getCategories: () => apiClient.get('/api/categories'),
+};
 
-// Response Interceptor for handling auth errors globally
-api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const originalRequest = error.config;
+// Cart Endpoints
+export const cartApi = {
+    get: () => apiClient.get('/api/cart'),
+    add: (product_id: number, quantity: number = 1) =>
+        apiClient.post('/api/cart', { product_id, quantity }),
+    update: (item_id: number, quantity: number) =>
+        apiClient.patch(`/api/cart/${item_id}`, { quantity }),
+    remove: (item_id: number) => apiClient.delete(`/api/cart/${item_id}`),
+};
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-            const refreshToken = localStorage.getItem('refresh_token');
-
-            if (refreshToken) {
-                try {
-                    const res = await axios.post(`${API_URL}/auth/refresh`, {}, {
-                        headers: { Authorization: `Bearer ${refreshToken}` }
-                    });
-
-                    const { access_token } = res.data;
-                    localStorage.setItem('access_token', access_token);
-
-                    originalRequest.headers.Authorization = `Bearer ${access_token}`;
-                    return api(originalRequest);
-                } catch (refreshError) {
-                    // Refresh token expired or invalid
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/auth/login';
-                    return Promise.reject(refreshError);
-                }
-            }
-        }
-        return Promise.reject(error);
-    }
-);
+// Order Endpoints
+export const ordersApi = {
+    checkout: (paymentMethod: string) =>
+        apiClient.post('/api/orders/checkout', { payment_method: paymentMethod }),
+    list: (page = 1, limit = 10) =>
+        apiClient.get(`/api/orders?page=${page}&limit=${limit}`),
+    getDetails: (id: number) => apiClient.get(`/api/orders/${id}`),
+};

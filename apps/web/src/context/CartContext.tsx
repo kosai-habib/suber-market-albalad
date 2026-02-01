@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiFetch } from '@/lib/apiClient';
+import { cartApi } from '@/lib/api';
 import { useAuth } from './AuthContext';
 
 interface Product {
@@ -21,7 +21,7 @@ interface CartItem {
 
 interface CartContextType {
     cart: CartItem[];
-    addToCart: (product: Product) => Promise<void>;
+    addToCart: (product: Product, quantity?: number) => Promise<void>;
     updateQuantity: (id: number, quantity: number) => Promise<void>;
     removeFromCart: (id: number) => Promise<void>;
     clearCart: () => void;
@@ -40,13 +40,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         if (!isAuthenticated) return;
         try {
             setIsLoading(true);
-            const res = await apiFetch('/api/cart'); // Updated to apiFetch and /api prefix
-            if (res.ok) {
-                const data = await res.json(); // JSON parsing
-                setCart(data);
-            } else {
-                console.error('Failed to fetch cart:', res.status, res.statusText);
-            }
+            const res = await cartApi.get();
+            setCart(res.data);
         } catch (err) {
             console.error('Failed to fetch cart', err);
         } finally {
@@ -55,26 +50,26 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     useEffect(() => {
-        fetchCart();
+        if (isAuthenticated) {
+            fetchCart();
+        } else {
+            setCart([]);
+        }
     }, [isAuthenticated]);
 
-    const addToCart = async (product: Product) => {
+    const addToCart = async (product: Product, quantity: number = 1) => {
         if (!isAuthenticated) {
-            // Local cart logic if not logged in
             const existing = cart.find(item => item.product.id === product.id);
             if (existing) {
-                setCart(cart.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+                setCart(cart.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + quantity } : item));
             } else {
-                setCart([...cart, { id: Math.random(), product, quantity: 1 }]);
+                setCart([...cart, { id: Math.random(), product, quantity }]);
             }
             return;
         }
 
         try {
-            await apiFetch('/api/cart', { // Updated to apiFetch and /api prefix
-                method: 'POST',
-                body: JSON.stringify({ product_id: product.id, quantity: 1 })
-            });
+            await cartApi.add(product.id, quantity);
             await fetchCart();
         } catch (err) {
             console.error(err);
@@ -87,10 +82,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
         try {
-            await apiFetch(`/api/cart/${id}`, { // Updated to apiFetch and /api prefix
-                method: 'PATCH',
-                body: JSON.stringify({ quantity })
-            });
+            await cartApi.update(id, quantity);
             await fetchCart();
         } catch (err) {
             console.error(err);
@@ -103,9 +95,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
         try {
-            await apiFetch(`/api/cart/${id}`, { // Updated to apiFetch and /api prefix
-                method: 'DELETE'
-            });
+            await cartApi.remove(id);
             await fetchCart();
         } catch (err) {
             console.error(err);

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/apiClient';
+import { authApi } from '@/lib/api';
 import Link from 'next/link';
 import { Mail, Lock, ArrowRight, Loader2, Sparkles, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -24,58 +24,14 @@ export default function RegisterPage() {
         setLoading(true);
         setError('');
 
-        // Validation
-        const emailRegex = /^[\w.-]+@[\w.-]+\.\w+$/;
-        const passwordMinLen = 8;
-        // Simple phone validation: accepts 05XXXXXXXX or +97205XXXXXXXX
-        const phoneRegex = /^(\+972|0)?5\d{8}$/;
-
-        if (!emailRegex.test(email)) {
-            setError('Please enter a valid email address.');
-            setLoading(false);
-            return;
-        }
-
-        if (password.length < passwordMinLen || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
-            setError('Password must be at least 8 chars with 1 letter & 1 number.');
-            setLoading(false);
-            return;
-        }
-
-        if (phone) {
-            const cleanPhone = phone.replace(/[\s-]/g, '');
-            if (!phoneRegex.test(cleanPhone)) {
-                setError('Phone must be Israeli mobile: 05XXXXXXXX or +97205XXXXXXXX');
-                setLoading(false);
-                return;
-            }
-        }
-
         try {
-            const regRes = await apiFetch('/api/auth/register', {
-                method: 'POST',
-                body: JSON.stringify({ email, password, phone })
-            });
-            if (!regRes.ok) {
-                const errorData = await regRes.json();
-                throw new Error(errorData.message || errorData.error || 'Registration failed.');
-            }
-
-            const loginRes = await apiFetch('/api/auth/login', {
-                method: 'POST',
-                body: JSON.stringify({ email, password })
-            });
-
-            if (!loginRes.ok) {
-                const errorData = await loginRes.json();
-                throw new Error(errorData.message || errorData.error || 'Login failed after registration.');
-            }
-
-            const data = await loginRes.json();
-            login(data.access_token, data.refresh_token, data.user);
+            await authApi.register({ email, password, phone });
+            const loginRes = await authApi.login({ email, password });
+            const data = loginRes.data;
+            login(data.access_token, data.refresh_token || '', data.user);
             router.push('/');
         } catch (err: any) {
-            setError(err.message || 'Registration failed.');
+            setError(err.response?.data?.message || err.response?.data?.error || 'Registration failed.');
         } finally {
             setLoading(false);
         }

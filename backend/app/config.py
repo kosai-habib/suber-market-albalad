@@ -3,7 +3,8 @@ import os
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback-jwt-secret")
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///dev.db")
+    basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(basedir, 'dev.db')}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Enhancements

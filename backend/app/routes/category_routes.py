@@ -1,12 +1,10 @@
 from flask import Blueprint, jsonify
-from flask_cors import cross_origin
 from app.models import Category
-from app.utils.serializers import category_to_dict
+from app.schemas.category_schema import category_to_dict
 
 categories_bp = Blueprint("categories", __name__)
 
 @categories_bp.get("/categories")
-@cross_origin(origin="http://localhost:3000")
 def get_categories():
     """
     يرجع قائمة الفئات كـ array مباشر (بدون wrapper)

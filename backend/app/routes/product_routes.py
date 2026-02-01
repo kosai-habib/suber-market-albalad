@@ -1,13 +1,11 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
-from flask_cors import cross_origin
 from app.models import Product, Category
-from app.utils.serializers import product_to_dict
+from app.schemas.product_schema import product_to_dict
 
 products_bp = Blueprint("products", __name__)
 
 @products_bp.get("/products")
-@cross_origin(origin="http://localhost:3000")
 def get_products():
     """
     يرجع قائمة المنتجات كـ array مباشر (بدون pagination wrapper)
@@ -66,19 +64,7 @@ def get_products():
 @products_bp.get("/products/<int:product_id>")
 def get_product(product_id):
     p = Product.query.get_or_404(product_id)
-    return jsonify({
-        "id": p.id,
-        "name": p.name,
-        "price": p.price,
-        "image_url": p.image_url,
-        "category_id": p.category_id,
-        "category_name": p.category.name if p.category else None,
-        "category_image": p.category.image_url if p.category else None,
-        "is_discounted": p.is_discounted,
-        "discount_percent": p.discount_percent,
-        "unit": p.unit,
-        "badge": p.badge
-    })
+    return jsonify(product_to_dict(p))
 
 @products_bp.get("/products/protected")
 @jwt_required()

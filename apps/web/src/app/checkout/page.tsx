@@ -5,7 +5,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch, requireAuth } from '@/lib/apiClient';
+import { ordersApi } from '@/lib/api';
+import { requireAuth } from '@/lib/apiClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     CreditCard,
@@ -36,43 +37,54 @@ export default function CheckoutPage() {
 
     useEffect(() => {
         if (!authLoading) {
-            try {
-                requireAuth(router.push);
-            } catch (e) {
-                // error already handled by requireAuth (redirect)
-            }
+            if (!requireAuth(router.push)) return;
         }
     }, [authLoading, router]);
 
     const handlePlaceOrder = async () => {
+        if (cart.length === 0) {
+            setError('Your cart is empty. Please add items before checkout.');
+            return;
+        }
+
         setIsSubmitting(true);
         setError(null);
+
+        console.log('🛒 Starting checkout with:', {
+            cartItems: cart.length,
+            paymentMethod: selectedMethod,
+            total: finalTotal,
+            token: localStorage.getItem('access_token') ? 'Present' : 'Missing'
+        });
+
         try {
-            const res = await apiFetch('/api/orders/checkout', {
-                method: 'POST',
-                body: JSON.stringify({
-                    payment_method: selectedMethod
-                })
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || errorData.message || 'Transaction failed');
-            }
-
-            const data = await res.json();
+            const res = await ordersApi.checkout(selectedMethod);
+            console.log('✅ Checkout successful:', res.data);
 
             // Backend success
-            setOrderData(data);
+            setOrderData(res.data);
             setSuccess(true);
             clearCart();
 
             // Redirect after showing success UI
-            setTimeout(() => router.push(`/orders`), 3000);
+            setTimeout(() => router.push(`/orders`), 5000);
 
         } catch (err: any) {
-            console.error('Checkout error:', err);
-            setError(err.message || 'Transaction could not be completed at this time.');
+            console.error('❌ Checkout error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                isNetworkError: !err.response
+            });
+
+            if (err.message === 'Network Error') {
+                setError('Unable to connect to the server. Please check if the backend is running on port 5001.');
+            } else if (err.response?.status === 401) {
+                setError('Your session has expired. Please log in again.');
+                setTimeout(() => router.push('/auth/login'), 2000);
+            } else {
+                setError(err.response?.data?.error || err.response?.data?.message || 'Transaction could not be completed at this time.');
+            }
         } finally {
             setIsSubmitting(false);
         }

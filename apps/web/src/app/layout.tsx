@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
@@ -26,7 +27,9 @@ export default function RootLayout({
                 <AuthProvider>
                     <ThemeProvider>
                         <CartProvider>
-                            <Navbar />
+                            <Suspense fallback={<div className="h-[90px] bg-surface border-b border-border" />}>
+                                <Navbar />
+                            </Suspense>
                             <main className="min-h-[calc(100vh-80px)]">
                                 {children}
                             </main>

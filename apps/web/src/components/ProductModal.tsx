@@ -31,31 +31,10 @@ export const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) =>
 
     if (!product) return null;
 
-    const originalPrice = product.is_discounted
-        ? product.price / (1 - (product.discount_percent || 0) / 100)
-        : product.price;
-
     const displayImage = product.image_url || product.category_image;
 
     const handleAddToCart = () => {
-        // Here we ideally functionality to addToCart with quantity in Context, 
-        // but current context might only support adding single item or we loop.
-        // Checking CartContext usage: `addToCart(product)` usually adds 1.
-        // If context supports quantity, use it. If not, call it multiple times or update context.
-        // Assuming context interface needs check. 
-        // For now, let's assume we loop or send quantity if supported.
-        // UPDATE: I should check CartContext. 
-        // But to be safe and quick without checking file yet: I will loop calls if needed or better, check context next step.
-        // Actually, for "Quick View", adding 1 is standard if context is simple. 
-        // But requirement says "Quantity Selector".
-        // I'll add logic to call addToCart multiple times or once with qty if adaptable.
-        // Let's assume standard add.
-
-        // *Optimistic UI*
-        for (let i = 0; i < quantity; i++) {
-            addToCart(product);
-        }
-
+        addToCart(product, quantity);
         setIsAdded(true);
         setTimeout(() => {
             setIsAdded(false);
@@ -122,7 +101,7 @@ export const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) =>
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center gap-2 text-accent">
                                     <div className="flex">
-                                        {[1, 2, 3, 4].map(i => <Star key={i} size={16} className="fill-current" />)}
+                                        {[1, 2, 3, 4].map(i => < Star key={i} size={16} className="fill-current" />)}
                                         <Star size={16} className="text-text-muted" />
                                     </div>
                                     <span className="text-xs font-bold text-text-muted uppercase tracking-wider mt-0.5">4.0 (128 Reviews)</span>

@@ -5,9 +5,9 @@ from app.services.order_service import (
     get_user_orders,
     get_order_details
 )
-from app.utils.order_utils import (
-    format_order_response,
-    format_order_with_items
+from app.schemas.order_schema import (
+    order_to_dict as format_order_response,
+    order_with_items_to_dict as format_order_with_items
 )
 
 orders_bp = Blueprint("orders", __name__)
@@ -16,26 +16,37 @@ orders_bp = Blueprint("orders", __name__)
 @orders_bp.post("/orders/checkout")
 @jwt_required()
 def checkout():
-    user_id = int(get_jwt_identity())
-    data = request.get_json(force=True)
-
-    if 'payment_method' not in data:
-        return jsonify({'error': 'payment_method is required'}), 400
-
     try:
+        user_id = int(get_jwt_identity())
+        data = request.get_json(force=True)
+
+        print(f"🛒 Checkout request from user {user_id}: {data}")
+
+        if 'payment_method' not in data:
+            return jsonify({'error': 'payment_method is required'}), 400
+
         order = create_order_from_cart(user_id, data['payment_method'])
-        
-        return jsonify({
+
+        response_data = {
             "status": "success",
             "order_id": order.id,
             "order_number": order.order_number,
-            "paid_at": order.paid_at.isoformat(),
+            "paid_at": order.paid_at.isoformat() if order.paid_at else None,
             "payment_status": order.payment_status,
             "total": order.total
-        }), 200
-        
+        }
+
+        print(f"✅ Order created successfully: {response_data}")
+        return jsonify(response_data), 200
+
     except ValueError as e:
-        return jsonify({"message": str(e)}), 400
+        print(f"❌ Checkout ValueError: {str(e)}")
+        return jsonify({"error": str(e), "message": str(e)}), 400
+    except Exception as e:
+        print(f"❌ Checkout Exception: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 
 @orders_bp.get("/orders")

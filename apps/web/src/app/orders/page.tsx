@@ -3,7 +3,8 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetch, requireAuth } from '@/lib/apiClient';
+import { ordersApi } from '@/lib/api';
+import { requireAuth } from '@/lib/apiClient';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -46,11 +47,7 @@ export default function OrdersPage() {
 
     useEffect(() => {
         if (!authLoading) {
-            try {
-                requireAuth(router.push);
-            } catch (e) {
-                // Handled
-            }
+            if (!requireAuth(router.push)) return;
         }
     }, [authLoading, router]);
 
@@ -59,14 +56,10 @@ export default function OrdersPage() {
             if (!isAuthenticated) return;
             try {
                 setLoading(true);
-                const res = await apiFetch('/api/orders');
-                if (res.ok) {
-                    const data = await res.json();
-                    setOrders(data.items || []);
-                } else {
-                    setError('Order retrieval failed.');
-                }
+                const res = await ordersApi.list();
+                setOrders(res.data.items || []);
             } catch (err) {
+                console.error('Order fetch error:', err);
                 setError('Order retrieval failed.');
             } finally {
                 setLoading(false);

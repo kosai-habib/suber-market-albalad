@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from .config import Config
 from .extensions import db, migrate, jwt, limiter
@@ -8,20 +8,38 @@ def create_app():
     # CORS configuration for development
     CORS(
         app,
-        resources={r"/api/*": {
-            "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
-            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "expose_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True
-        }}
+        resources={
+            r"/api/*": {
+                "origins": ["http://localhost:3000"],
+                "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization"],
+                "expose_headers": ["Content-Type", "Authorization"],
+                "supports_credentials": True,
+                "max_age": 3600
+            }
+        },
+        supports_credentials=True
     )
     app.config.from_object(Config)
-
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    limiter.init_app(app)
+    # limiter.init_app(app) # Disable limiter for debugging
+
+    # Request logging middleware for debugging
+    @app.before_request
+    def log_request():
+        if request.method != 'OPTIONS':  # Skip OPTIONS preflight logs
+            print(f"📥 {request.method} {request.path}")
+            if request.get_json(silent=True):
+                print(f"   Body: {request.get_json(silent=True)}")
+            print(f"   Headers: Authorization={request.headers.get('Authorization', 'None')[:50]}...")
+
+    @app.after_request
+    def log_response(response):
+        if request.method != 'OPTIONS':
+            print(f"📤 {request.method} {request.path} -> {response.status_code}")
+        return response
 
     @app.errorhandler(400)
     @app.errorhandler(401)
@@ -56,22 +74,22 @@ def create_app():
             }
         })
 
-    from .routes.health import health_bp
+    from .routes.health_routes import health_bp
     app.register_blueprint(health_bp, url_prefix="/api")
 
-    from .routes.categories import categories_bp
+    from .routes.category_routes import categories_bp
     app.register_blueprint(categories_bp, url_prefix="/api")
 
-    from .routes.products import products_bp
+    from .routes.product_routes import products_bp
     app.register_blueprint(products_bp, url_prefix="/api")
 
-    from .routes.auth import auth_bp
+    from .routes.auth_routes import auth_bp
     app.register_blueprint(auth_bp, url_prefix="/api")
 
-    from .routes.cart import cart_bp
+    from .routes.cart_routes import cart_bp
     app.register_blueprint(cart_bp, url_prefix="/api")
 
-    from .routes.orders import orders_bp
+    from .routes.order_routes import orders_bp
     app.register_blueprint(orders_bp, url_prefix="/api")
 
     return app

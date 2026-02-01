@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { apiFetch, requireAuth } from '@/lib/apiClient';
+import { ordersApi } from '@/lib/api';
+import { requireAuth } from '@/lib/apiClient';
 import { useAuth } from '@/context/AuthContext';
-import { motion } from 'framer-motion';
 import {
     ArrowLeft,
     Package,
@@ -21,8 +21,15 @@ import {
 import Link from 'next/link';
 
 interface OrderItem {
-    product_id: number;
-    product_name: string;
+    id: number;
+    product: {
+        id: number;
+        name: string;
+        price: number;
+        image_url: string;
+        unit: string;
+        badge: string;
+    };
     quantity: number;
     price_at_purchase: number;
     line_total: number;
@@ -54,11 +61,7 @@ export default function OrderDetailsPage() {
 
     useEffect(() => {
         if (!authLoading) {
-            try {
-                requireAuth(router.push);
-            } catch (e) {
-                // Handled
-            }
+            if (!requireAuth(router.push)) return;
         }
     }, [authLoading, router]);
 
@@ -67,14 +70,10 @@ export default function OrderDetailsPage() {
             if (!isAuthenticated || !id) return;
             try {
                 setLoading(true);
-                const res = await apiFetch(`/api/orders/${id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setOrder(data);
-                } else {
-                    setError('Failed to load order details.');
-                }
+                const res = await ordersApi.getDetails(Number(id));
+                setOrder(res.data);
             } catch (err) {
+                console.error('Order details fetch error:', err);
                 setError('Failed to load order details.');
             } finally {
                 setLoading(false);
@@ -180,11 +179,11 @@ export default function OrderDetailsPage() {
                             {order.items.map((item, idx) => (
                                 <div key={idx} className="py-6 first:pt-0 last:pb-0 flex items-center justify-between group">
                                     <div className="flex flex-col gap-1">
-                                        <span className="font-bold text-lg text-text group-hover:text-primary transition-colors">{item.product_name}</span>
+                                        <span className="font-bold text-lg text-text group-hover:text-primary transition-colors">{item.product.name}</span>
                                         <div className="flex items-center gap-3 text-xs font-black text-text-muted/60 uppercase tracking-widest">
                                             <span>{item.quantity} Unit(s)</span>
                                             <span className="w-1 h-1 bg-border rounded-full" />
-                                            <span>₪{item.price_at_purchase.toFixed(2)} each</span>
+                                            <span>₪{item.product.price.toFixed(2)} each</span>
                                         </div>
                                     </div>
                                     <span className="text-xl font-black text-text">₪{item.line_total.toFixed(2)}</span>

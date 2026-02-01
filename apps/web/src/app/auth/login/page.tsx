@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/apiClient';
+import { authApi } from '@/lib/api';
 import Link from 'next/link';
 import { Mail, Lock, ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -23,37 +23,13 @@ export default function LoginPage() {
         setLoading(true);
         setError('');
 
-        // Validation
-        const emailRegex = /^[\w.-]+@[\w.-]+\.\w+$/;
-
-        if (!emailRegex.test(email)) {
-            setError('Please enter a valid email address.');
-            setLoading(false);
-            return;
-        }
-
-        if (!password) {
-            setError('Please enter your password.');
-            setLoading(false);
-            return;
-        }
-
         try {
-            const res = await apiFetch('/api/auth/login', {
-                method: 'POST',
-                body: JSON.stringify({ email, password })
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || errorData.error || 'Login failed');
-            }
-
-            const data = await res.json();
-            login(data.access_token, data.refresh_token, data.user);
+            const res = await authApi.login({ email, password });
+            const data = res.data;
+            login(data.access_token, data.refresh_token || '', data.user);
             router.push('/');
         } catch (err: any) {
-            setError(err.message || 'Login failed. Please check your credentials.');
+            setError(err.response?.data?.message || err.response?.data?.error || 'Login failed. Please check your credentials.');
         } finally {
             setLoading(false);
         }
