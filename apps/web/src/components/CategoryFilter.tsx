@@ -16,12 +16,12 @@ interface Props {
 
 export const CategoryFilter = ({ categories, activeCategory, onSelect }: Props) => {
     return (
-        <div className="flex items-center gap-3 overflow-x-auto pb-6 scrollbar-hide pt-2">
+        <div className="flex items-center gap-3 overflow-x-auto pb-4 scrollbar-hide pt-2 md:flex-wrap md:overflow-visible">
             <button
                 onClick={() => onSelect(null)}
-                className={`whitespace-nowrap px-6 py-2 rounded-full text-sm font-semibold transition-premium border ${activeCategory === null
-                        ? 'bg-primary text-white border-primary shadow-soft'
-                        : 'bg-surface text-text-muted border-border hover:border-primary hover:text-primary'
+                className={`whitespace-nowrap px-6 py-2 rounded-xl text-sm font-bold transition-premium border min-h-[44px] flex items-center justify-center ${activeCategory === null
+                    ? 'bg-primary text-white border-primary shadow-soft'
+                    : 'bg-surface text-text-muted border-border hover:border-primary hover:text-primary'
                     }`}
             >
                 All Products
@@ -30,9 +30,9 @@ export const CategoryFilter = ({ categories, activeCategory, onSelect }: Props) 
                 <button
                     key={cat.id}
                     onClick={() => onSelect(cat.slug)}
-                    className={`whitespace-nowrap px-6 py-2 rounded-full text-sm font-semibold transition-premium border ${activeCategory === cat.slug
-                            ? 'bg-primary text-white border-primary shadow-soft'
-                            : 'bg-surface text-text-muted border-border hover:border-primary hover:text-primary'
+                    className={`whitespace-nowrap px-6 py-2 rounded-xl text-sm font-bold transition-premium border min-h-[44px] flex items-center justify-center ${activeCategory === cat.slug
+                        ? 'bg-primary text-white border-primary shadow-soft'
+                        : 'bg-surface text-text-muted border-border hover:border-primary hover:text-primary'
                         }`}
                 >
                     {cat.name}

@@ -110,6 +110,7 @@
 
 /* Component Classes - Native CSS for Tailwind v4 */
 .container-custom {
+  width: 100%;
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
@@ -117,14 +118,14 @@
   padding-right: 1rem;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .container-custom {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .container-custom {
     padding-left: 2rem;
     padding-right: 2rem;
