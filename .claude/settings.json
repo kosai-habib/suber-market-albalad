@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(./test-checkout-connection.sh:*)"
+    ]
+  }
+}
