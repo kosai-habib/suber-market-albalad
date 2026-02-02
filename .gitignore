@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Environment
+.env
+
+# Editor
+.vscode/
+
+# Node / build
+node_modules/
+
+# Project-local folders (not part of submission)
+apps/
+kosai-habib/
